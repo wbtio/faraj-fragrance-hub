@@ -1,0 +1,215 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 40 20% 97%;
+    --foreground: 30 8% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 30 8% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 8% 12%;
+
+    --primary: 35 75% 45%;
+    --primary-foreground: 0 0% 100%;
+    
+    --luxury-gold: 45 85% 55%;
+    --luxury-dark: 30 15% 15%;
+    --luxury-light: 40 30% 92%;
+
+    --secondary: 40 15% 90%;
+    --secondary-foreground: 30 8% 12%;
+
+    --muted: 40 10% 94%;
+    --muted-foreground: 30 5% 45%;
+
+    --accent: 35 75% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 15% 88%;
+    --input: 40 15% 88%;
+    --ring: 35 75% 45%;
+
+    --radius: 0.5rem;
+    
+    --gradient-luxury: linear-gradient(135deg, hsl(45 85% 55%), hsl(35 75% 45%));
+    --gradient-hero: linear-gradient(135deg, hsl(30 15% 15%) 0%, hsl(35 35% 25%) 100%);
+    --shadow-luxury: 0 10px 40px -10px hsl(35 75% 45% / 0.3);
+    --shadow-soft: 0 2px 20px -5px hsl(30 8% 12% / 0.1);
+  }
+
+  .dark {
+    --background: 30 15% 10%;
+    --foreground: 40 20% 95%;
+
+    --card: 30 15% 15%;
+    --card-foreground: 40 20% 95%;
+
+    --popover: 30 15% 15%;
+    --popover-foreground: 40 20% 95%;
+
+    --primary: 45 85% 55%;
+    --primary-foreground: 30 15% 15%;
+    
+    --luxury-gold: 45 85% 55%;
+    --luxury-dark: 30 15% 8%;
+    --luxury-light: 40 20% 20%;
+
+    --secondary: 30 15% 20%;
+    --secondary-foreground: 40 20% 95%;
+
+    --muted: 30 10% 20%;
+    --muted-foreground: 40 10% 60%;
+
+    --accent: 45 85% 55%;
+    --accent-foreground: 30 15% 15%;
+
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 40 20% 95%;
+
+    --border: 30 15% 25%;
+    --input: 30 15% 25%;
+    --ring: 45 85% 55%;
+    
+    --gradient-luxury: linear-gradient(135deg, hsl(45 85% 55%), hsl(35 75% 45%));
+    --gradient-hero: linear-gradient(135deg, hsl(30 15% 8%) 0%, hsl(35 25% 15%) 100%);
+    --shadow-luxury: 0 10px 40px -10px hsl(45 85% 55% / 0.4);
+    --shadow-soft: 0 2px 20px -5px hsl(0 0% 0% / 0.3);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Tajawal', 'Inter', sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
+  }
+}
+
+@layer utilities {
+  .gradient-luxury {
+    background: var(--gradient-luxury);
+  }
+  
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+  
+  .shadow-luxury {
+    box-shadow: var(--shadow-luxury);
+  }
+  
+  .shadow-luxury-hover {
+    box-shadow: 0 20px 60px -10px hsl(35 75% 45% / 0.4), 0 0 40px -10px hsl(45 85% 55% / 0.2);
+  }
+  
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+  
+  .text-gradient {
+    background: var(--gradient-luxury);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  .animate-fade-in-up {
+    animation: fade-in-up 0.6s ease-out forwards;
+  }
+  
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out forwards;
+  }
+  
+  .stagger-1 {
+    animation-delay: 0.1s;
+  }
+  
+  .stagger-2 {
+    animation-delay: 0.2s;
+  }
+  
+  .stagger-3 {
+    animation-delay: 0.3s;
+  }
+  
+  @keyframes marquee-continuous {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+  
+  .animate-marquee-continuous {
+    display: flex;
+    animation: marquee-continuous 30s linear infinite;
+    width: fit-content;
+  }
+  
+  @keyframes gradient-x {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+  
+  .animate-gradient-x {
+    background-size: 200% 200%;
+    animation: gradient-x 3s ease infinite;
+  }
+  
+  .animation-delay-150 {
+    animation-delay: 150ms;
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
