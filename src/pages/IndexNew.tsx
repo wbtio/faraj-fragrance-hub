@@ -56,7 +56,7 @@ const IndexNew = () => {
         .from("homepage_sections")
         .select(`
           *,
-          brands (
+          brands!homepage_sections_brand_id_fkey (
             id,
             name_ar,
             description_ar,

@@ -8,7 +8,8 @@ import {
   Home, 
   ShoppingCart,
   Users,
-  LogOut
+  LogOut,
+  Image
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -21,6 +22,7 @@ const AdminHeader = () => {
     { path: "/admin/products", icon: Package, label: "إدارة المنتجات" },
     { path: "/admin/brands", icon: Tag, label: "إدارة البراندات" },
     { path: "/admin/categories", icon: FolderTree, label: "إدارة الفئات" },
+    { path: "/admin/hero", icon: Image, label: "Hero Section" },
     { path: "/admin/homepage", icon: Home, label: "إدارة الصفحة الرئيسية" },
     { path: "/admin/orders", icon: ShoppingCart, label: "إدارة الطلبات" },
     { path: "/admin/customers", icon: Users, label: "إدارة العملاء" },

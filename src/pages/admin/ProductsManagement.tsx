@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, X, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Product {
@@ -80,6 +80,9 @@ const ProductsManagement = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [additionalImages, setAdditionalImages] = useState<File[]>([]);
+  const [additionalImagePreviews, setAdditionalImagePreviews] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<{id: string, image_url: string, display_order: number}[]>([]);
   
   const [formData, setFormData] = useState<Partial<Product>>({
     name: "",
@@ -182,6 +185,21 @@ const ProductsManagement = () => {
     }
   };
 
+  const fetchProductImages = async (productId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('product_images')
+        .select('*')
+        .eq('product_id', productId)
+        .order('display_order');
+      
+      if (error) throw error;
+      setExistingImages(data || []);
+    } catch (error) {
+      console.error('Error fetching product images:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -205,6 +223,8 @@ const ProductsManagement = () => {
         image_url: imageUrl,
       };
 
+      let productId: string;
+
       if (editingProduct) {
         // Update existing product
         const { error } = await supabase
@@ -216,6 +236,7 @@ const ProductsManagement = () => {
           .eq("id", editingProduct.id);
 
         if (error) throw error;
+        productId = editingProduct.id;
 
         toast({
           title: "تم التحديث",
@@ -223,16 +244,36 @@ const ProductsManagement = () => {
         });
       } else {
         // Create new product
-        const { error } = await supabase
+        const { data: newProduct, error } = await supabase
           .from("products")
-          .insert([productData]);
+          .insert([productData])
+          .select()
+          .single();
 
         if (error) throw error;
+        productId = newProduct.id;
 
         toast({
           title: "تم الإضافة",
           description: "تم إضافة المنتج بنجاح",
         });
+      }
+
+      // Upload and save additional images
+      if (additionalImages.length > 0) {
+        for (let i = 0; i < additionalImages.length; i++) {
+          const uploadedUrl = await uploadImage(additionalImages[i]);
+          if (uploadedUrl) {
+            await supabase
+              .from('product_images')
+              .insert([{
+                product_id: productId,
+                image_url: uploadedUrl,
+                display_order: i + 1,
+                is_primary: i === 0 && !imageUrl
+              }]);
+          }
+        }
       }
 
       setIsDialogOpen(false);
@@ -251,9 +292,10 @@ const ProductsManagement = () => {
     }
   };
 
-  const handleEdit = (product: Product) => {
+  const handleEdit = async (product: Product) => {
     setEditingProduct(product);
     setFormData(product);
+    await fetchProductImages(product.id);
     setIsDialogOpen(true);
   };
 
@@ -296,10 +338,57 @@ const ProductsManagement = () => {
     }
   };
 
+  const handleAdditionalImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      setAdditionalImages(prev => [...prev, ...files]);
+      
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setAdditionalImagePreviews(prev => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const removeAdditionalImage = (index: number) => {
+    setAdditionalImages(prev => prev.filter((_, i) => i !== index));
+    setAdditionalImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingImage = async (imageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('product_images')
+        .delete()
+        .eq('id', imageId);
+      
+      if (error) throw error;
+      
+      setExistingImages(prev => prev.filter(img => img.id !== imageId));
+      toast({
+        title: "تم الحذف",
+        description: "تم حذف الصورة بنجاح",
+      });
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل حذف الصورة",
+        variant: "destructive",
+      });
+    }
+  };
+
   const resetForm = () => {
     setEditingProduct(null);
     setImageFile(null);
     setImagePreview(null);
+    setAdditionalImages([]);
+    setAdditionalImagePreviews([]);
+    setExistingImages([]);
     setFormData({
       name: "",
       name_ar: "",
@@ -458,7 +547,7 @@ const ProductsManagement = () => {
 
               {/* Image Upload */}
               <div className="space-y-2">
-                <Label htmlFor="image">صورة المنتج</Label>
+                <Label htmlFor="image">صورة المنتج الرئيسية</Label>
                 <Input
                   id="image"
                   type="file"
@@ -482,6 +571,70 @@ const ProductsManagement = () => {
                       alt="الصورة الحالية"
                       className="w-32 h-32 object-cover rounded-lg border"
                     />
+                  </div>
+                )}
+              </div>
+
+              {/* Additional Images Upload */}
+              <div className="space-y-2">
+                <Label htmlFor="additional-images">صور إضافية للمنتج</Label>
+                <Input
+                  id="additional-images"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleAdditionalImagesChange}
+                  disabled={isUploading}
+                />
+                <p className="text-xs text-muted-foreground">يمكنك اختيار عدة صور في نفس الوقت</p>
+                
+                {/* Existing Images */}
+                {existingImages.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-sm font-medium mb-2">الصور الموجودة:</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {existingImages.map((img) => (
+                        <div key={img.id} className="relative group">
+                          <img
+                            src={img.image_url}
+                            alt="صورة المنتج"
+                            className="w-full h-24 object-cover rounded-lg border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeExistingImage(img.id)}
+                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* New Images Preview */}
+                {additionalImagePreviews.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-sm font-medium mb-2">صور جديدة للرفع:</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {additionalImagePreviews.map((preview, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={preview}
+                            alt={`معاينة ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeAdditionalImage(index)}
+                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

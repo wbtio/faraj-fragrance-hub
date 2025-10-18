@@ -15,6 +15,7 @@ import ProductDetails from "./pages/ProductDetails";
 import ProductsManagement from "./pages/admin/ProductsManagement";
 import BrandsManagement from "./pages/admin/BrandsManagement";
 import CategoriesManagement from "./pages/admin/CategoriesManagement";
+import HeroManagement from "./pages/admin/HeroManagement";
 import HomepageManagement from "./pages/admin/HomepageManagement";
 import OrdersManagement from "./pages/admin/OrdersManagement";
 import CustomersManagement from "./pages/admin/CustomersManagement";
@@ -64,6 +65,11 @@ const App = () => (
             <Route path="/admin/categories" element={
               <ProtectedRoute>
                 <CategoriesManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/hero" element={
+              <ProtectedRoute>
+                <HeroManagement />
               </ProtectedRoute>
             } />
             <Route path="/admin/homepage" element={

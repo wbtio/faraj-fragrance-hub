@@ -19,6 +19,7 @@ interface Product {
   image_url?: string;
   is_new?: boolean;
   on_sale?: boolean;
+  stock_quantity?: number;
   brands?: { name_ar: string };
   categories?: { name_ar: string };
 }
@@ -83,13 +84,13 @@ const Search = () => {
         .from("products")
         .select(`
           *,
-          brands (name_ar),
-          categories (name_ar)
+          brands!products_brand_id_fkey (name_ar),
+          categories!products_category_id_fkey (name_ar)
         `);
 
       // Search filter
       if (searchQuery) {
-        query = query.or(`name_ar.ilike.%${searchQuery}%,name_en.ilike.%${searchQuery}%`);
+        query = query.ilike('name_ar', `%${searchQuery}%`);
       }
 
       // Brand filter
@@ -323,6 +324,7 @@ const Search = () => {
                 image={product.image_url}
                 isNew={product.is_new}
                 onSale={product.on_sale}
+                stockQuantity={product.stock_quantity}
               />
             ))}
           </div>

@@ -167,15 +167,15 @@ const OrdersManagement = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-      pending: { label: "قيد الانتظار", variant: "secondary" },
-      processing: { label: "قيد المعالجة", variant: "default" },
-      completed: { label: "مكتمل", variant: "outline" },
-      cancelled: { label: "ملغي", variant: "destructive" },
+    const statusConfig: Record<string, { label: string; className: string }> = {
+      pending: { label: "قيد الانتظار", className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100" },
+      processing: { label: "قيد المعالجة", className: "bg-blue-100 text-blue-800 hover:bg-blue-100" },
+      completed: { label: "مكتمل", className: "bg-green-100 text-green-800 hover:bg-green-100" },
+      cancelled: { label: "ملغي", className: "bg-red-100 text-red-800 hover:bg-red-100" },
     };
 
     const config = statusConfig[status] || statusConfig.pending;
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    return <Badge className={config.className}>{config.label}</Badge>;
   };
 
   const formatDate = (dateString: string) => {

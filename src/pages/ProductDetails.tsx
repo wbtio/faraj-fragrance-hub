@@ -4,9 +4,12 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
-import { ShoppingCart, Heart, ArrowRight, Package, Shield, Truck } from "lucide-react";
+import { ShoppingCart, Heart, ArrowRight, Package, Shield, Truck, Bell } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface Product {
@@ -22,8 +25,17 @@ interface Product {
   is_new?: boolean;
   on_sale?: boolean;
   stock_quantity?: number;
+  top_notes?: string;
+  middle_notes?: string;
+  base_notes?: string;
   brands?: { name_ar: string };
   categories?: { name_ar: string };
+}
+
+interface ProductImage {
+  id: string;
+  image_url: string;
+  display_order: number;
 }
 
 const ProductDetails = () => {
@@ -37,6 +49,11 @@ const ProductDetails = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isNotifyDialogOpen, setIsNotifyDialogOpen] = useState(false);
+  const [notifyEmail, setNotifyEmail] = useState("");
+  const [notifyPhone, setNotifyPhone] = useState("");
+  const [productImages, setProductImages] = useState<ProductImage[]>([]);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   useEffect(() => {
     if (id) {
@@ -52,8 +69,8 @@ const ProductDetails = () => {
         .from("products")
         .select(`
           *,
-          brands (name_ar),
-          categories (name_ar)
+          brands!products_brand_id_fkey (name_ar),
+          categories!products_category_id_fkey (name_ar)
         `)
         .eq("id", id)
         .single();
@@ -61,14 +78,25 @@ const ProductDetails = () => {
       if (productError) throw productError;
       setProduct(productData);
 
+      // Fetch product images
+      const { data: imagesData } = await supabase
+        .from('product_images')
+        .select('*')
+        .eq('product_id', id)
+        .order('display_order');
+      
+      if (imagesData && imagesData.length > 0) {
+        setProductImages(imagesData);
+      }
+
       // Fetch related products from same category
       if (productData?.category_id) {
         const { data: relatedData } = await supabase
           .from("products")
           .select(`
             *,
-            brands (name_ar),
-            categories (name_ar)
+            brands!products_brand_id_fkey (name_ar),
+            categories!products_category_id_fkey (name_ar)
           `)
           .eq("category_id", productData.category_id)
           .neq("id", id)
@@ -114,6 +142,47 @@ const ProductDetails = () => {
       title: isFavorite ? "تمت الإزالة" : "تمت الإضافة",
       description: isFavorite ? "تم إزالة المنتج من المفضلة" : "تم إضافة المنتج إلى المفضلة",
     });
+  };
+
+  const handleNotifySubmit = async () => {
+    if (!notifyEmail && !notifyPhone) {
+      toast({
+        title: "خطأ",
+        description: "يرجى إدخال البريد الإلكتروني أو رقم الهاتف",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("stock_notifications")
+        .insert([
+          {
+            product_id: id,
+            email: notifyEmail || null,
+            phone: notifyPhone || null,
+          },
+        ]);
+
+      if (error) throw error;
+
+      toast({
+        title: "تم التسجيل",
+        description: "سنقوم بإعلامك عند توفر المنتج",
+      });
+
+      setIsNotifyDialogOpen(false);
+      setNotifyEmail("");
+      setNotifyPhone("");
+    } catch (error) {
+      console.error("Error saving notification:", error);
+      toast({
+        title: "خطأ",
+        description: "فشل حفظ طلب الإشعار",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
@@ -171,35 +240,73 @@ const ProductDetails = () => {
 
         {/* Product Details */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
-          {/* Product Image */}
-          <div className="relative">
-            <div className="aspect-square bg-muted rounded-lg overflow-hidden">
-              {product.image_url ? (
-                <img
-                  src={product.image_url}
-                  alt={product.name_ar}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <Package className="h-24 w-24 text-muted-foreground" />
-                </div>
-              )}
+          {/* Product Image Gallery */}
+          <div className="space-y-4">
+            {/* Main Image */}
+            <div className="relative">
+              <div className="aspect-square bg-muted rounded-lg overflow-hidden">
+                {(productImages.length > 0 || product.image_url) ? (
+                  <img
+                    src={selectedImageIndex === -1 ? product.image_url : (productImages[selectedImageIndex]?.image_url || product.image_url)}
+                    alt={product.name_ar}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Package className="h-24 w-24 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+              
+              {/* Badges */}
+              <div className="absolute top-4 right-4 flex flex-col gap-2">
+                {product.is_new && (
+                  <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-bold">
+                    جديد
+                  </span>
+                )}
+                {product.on_sale && discount > 0 && (
+                  <span className="bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-sm font-bold">
+                    خصم {discount}%
+                  </span>
+                )}
+              </div>
             </div>
             
-            {/* Badges */}
-            <div className="absolute top-4 right-4 flex flex-col gap-2">
-              {product.is_new && (
-                <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-bold">
-                  جديد
-                </span>
-              )}
-              {product.on_sale && discount > 0 && (
-                <span className="bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-sm font-bold">
-                  خصم {discount}%
-                </span>
-              )}
-            </div>
+            {/* Thumbnail Images */}
+            {productImages.length > 0 && (
+              <div className="grid grid-cols-4 gap-2">
+                {product.image_url && (
+                  <button
+                    onClick={() => setSelectedImageIndex(-1)}
+                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                      selectedImageIndex === -1 ? 'border-primary' : 'border-transparent hover:border-muted-foreground'
+                    }`}
+                  >
+                    <img
+                      src={product.image_url}
+                      alt="الصورة الرئيسية"
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                )}
+                {productImages.map((img, index) => (
+                  <button
+                    key={img.id}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                      selectedImageIndex === index ? 'border-primary' : 'border-transparent hover:border-muted-foreground'
+                    }`}
+                  >
+                    <img
+                      src={img.image_url}
+                      alt={`صورة ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Product Info */}
@@ -237,6 +344,33 @@ const ProductDetails = () => {
               </div>
             )}
 
+            {/* Fragrance Notes */}
+            {(product.top_notes || product.middle_notes || product.base_notes) && (
+              <div className="mb-6 p-4 bg-muted/50 rounded-lg">
+                <h3 className="font-semibold mb-4 text-lg">المكونات العطرية</h3>
+                <div className="space-y-3">
+                  {product.top_notes && (
+                    <div>
+                      <h4 className="font-medium text-primary mb-1">المكونات العلوية</h4>
+                      <p className="text-muted-foreground text-sm">{product.top_notes}</p>
+                    </div>
+                  )}
+                  {product.middle_notes && (
+                    <div>
+                      <h4 className="font-medium text-primary mb-1">المكونات الوسطى</h4>
+                      <p className="text-muted-foreground text-sm">{product.middle_notes}</p>
+                    </div>
+                  )}
+                  {product.base_notes && (
+                    <div>
+                      <h4 className="font-medium text-primary mb-1">المكونات القاعدية</h4>
+                      <p className="text-muted-foreground text-sm">{product.base_notes}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Stock Status */}
             <div className="mb-6">
               {product.stock_quantity && product.stock_quantity > 0 ? (
@@ -247,23 +381,46 @@ const ProductDetails = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3 mb-8">
-              <Button
-                size="lg"
-                className="flex-1 gap-2"
-                onClick={handleAddToCart}
-                disabled={isAddingToCart || !product.stock_quantity}
-              >
-                <ShoppingCart className="h-5 w-5" />
-                {isAddingToCart ? "جاري الإضافة..." : "أضف للسلة"}
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={handleToggleFavorite}
-              >
-                <Heart className={`h-5 w-5 ${isFavorite ? "fill-current text-red-500" : ""}`} />
-              </Button>
+            <div className="space-y-3 mb-8">
+              {product.stock_quantity && product.stock_quantity > 0 ? (
+                <div className="flex gap-3">
+                  <Button
+                    size="lg"
+                    className="flex-1 gap-2"
+                    onClick={handleAddToCart}
+                    disabled={isAddingToCart}
+                  >
+                    <ShoppingCart className="h-5 w-5" />
+                    {isAddingToCart ? "جاري الإضافة..." : "أضف للسلة"}
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={handleToggleFavorite}
+                  >
+                    <Heart className={`h-5 w-5 ${isFavorite ? "fill-current text-red-500" : ""}`} />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-3">
+                  <Button
+                    size="lg"
+                    className="flex-1 gap-2"
+                    variant="secondary"
+                    onClick={() => setIsNotifyDialogOpen(true)}
+                  >
+                    <Bell className="h-5 w-5" />
+                    أعلمني عند التوفر
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={handleToggleFavorite}
+                  >
+                    <Heart className={`h-5 w-5 ${isFavorite ? "fill-current text-red-500" : ""}`} />
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Features */}
@@ -309,12 +466,55 @@ const ProductDetails = () => {
                   image={relatedProduct.image_url}
                   isNew={relatedProduct.is_new}
                   onSale={relatedProduct.on_sale}
+                  stockQuantity={relatedProduct.stock_quantity}
                 />
               ))}
             </div>
           </div>
         )}
       </div>
+
+      {/* Notify When Available Dialog */}
+      <Dialog open={isNotifyDialogOpen} onOpenChange={setIsNotifyDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>أعلمني عند التوفر</DialogTitle>
+            <DialogDescription>
+              سنقوم بإرسال إشعار لك عندما يصبح المنتج متوفراً
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="notify-email">البريد الإلكتروني</Label>
+              <Input
+                id="notify-email"
+                type="email"
+                placeholder="example@email.com"
+                value={notifyEmail}
+                onChange={(e) => setNotifyEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="notify-phone">رقم الهاتف (اختياري)</Label>
+              <Input
+                id="notify-phone"
+                type="tel"
+                placeholder="07XXXXXXXXX"
+                value={notifyPhone}
+                onChange={(e) => setNotifyPhone(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsNotifyDialogOpen(false)}>
+              إلغاء
+            </Button>
+            <Button onClick={handleNotifySubmit}>
+              تأكيد
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>

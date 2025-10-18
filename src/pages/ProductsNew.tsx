@@ -31,10 +31,14 @@ interface Product {
   name_ar: string;
   name_en?: string;
   price: number;
+  original_price?: number;
   image_url?: string;
   brand_id: string;
   category_id: string;
   is_active: boolean;
+  stock_quantity?: number;
+  is_new?: boolean;
+  is_on_sale?: boolean;
   brands?: {
     name_ar: string;
   };
@@ -94,8 +98,8 @@ const ProductsNew = () => {
         .from("products")
         .select(`
           *,
-          brands (name_ar),
-          categories (name_ar)
+          brands!products_brand_id_fkey (name_ar),
+          categories!products_category_id_fkey (name_ar)
         `)
         .eq("is_active", true);
 
@@ -351,6 +355,10 @@ const ProductsNew = () => {
                     brand={product.brands?.name_ar || ""}
                     price={product.price}
                     image={product.image_url || ""}
+                    stockQuantity={product.stock_quantity}
+                    isNew={product.is_new}
+                    onSale={product.is_on_sale}
+                    originalPrice={product.original_price}
                   />
                 ))}
               </div>

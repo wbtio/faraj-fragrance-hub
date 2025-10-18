@@ -138,10 +138,10 @@ const Cart = () => {
                       </div>
                     </div>
 
-                    {/* Item Total - Left Side */}
-                    <div className="text-left min-w-[120px]">
+                    {/* Item Total - Right Side for RTL */}
+                    <div className="text-right min-w-[120px] flex flex-col items-end">
                       <p className="text-sm text-muted-foreground mb-1">المجموع</p>
-                      <p className="text-2xl font-bold text-primary">
+                      <p className="text-xl md:text-2xl font-bold text-primary whitespace-nowrap">
                         {((item.product?.price || 0) * item.quantity).toLocaleString()} د.ع
                       </p>
                     </div>
