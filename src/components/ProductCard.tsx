@@ -61,11 +61,6 @@ export const ProductCard = ({
       <div className="relative overflow-hidden bg-muted cursor-pointer" onClick={handleProductClick}>
         {/* Badges */}
         <div className="absolute top-3 right-3 z-10 flex flex-col gap-2">
-          {isOutOfStock && (
-            <span className="bg-destructive text-destructive-foreground text-xs font-semibold px-3 py-1 rounded-full">
-              نفذت الكمية
-            </span>
-          )}
           {!isOutOfStock && isNew && (
             <span className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full">
               جديد
@@ -95,7 +90,7 @@ export const ProductCard = ({
           <img
             src={image}
             alt={`${brand} ${name}`}
-            className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 p-4"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           />
         </div>
       </div>

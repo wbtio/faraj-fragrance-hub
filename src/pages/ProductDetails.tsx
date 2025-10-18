@@ -260,12 +260,12 @@ const ProductDetails = () => {
               
               {/* Badges */}
               <div className="absolute top-4 right-4 flex flex-col gap-2">
-                {product.is_new && (
+                {product.stock_quantity && product.stock_quantity > 0 && product.is_new && (
                   <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-bold">
                     جديد
                   </span>
                 )}
-                {product.on_sale && discount > 0 && (
+                {product.stock_quantity && product.stock_quantity > 0 && product.on_sale && discount > 0 && (
                   <span className="bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-sm font-bold">
                     خصم {discount}%
                   </span>
