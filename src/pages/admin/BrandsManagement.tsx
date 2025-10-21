@@ -35,6 +35,7 @@ interface Brand {
   slug: string;
   display_order: number;
   is_active: boolean;
+  show_in_header?: boolean;
 }
 
 const BrandsManagement = () => {
@@ -52,6 +53,7 @@ const BrandsManagement = () => {
     slug: "",
     display_order: 0,
     is_active: true,
+    show_in_header: false,
   });
 
   useEffect(() => {
@@ -220,6 +222,7 @@ const BrandsManagement = () => {
       slug: "",
       display_order: brands.length,
       is_active: true,
+      show_in_header: false,
     });
   };
 
@@ -321,6 +324,17 @@ const BrandsManagement = () => {
                 </label>
               </div>
 
+              <div className="flex items-center space-x-2 space-x-reverse">
+                <Checkbox
+                  id="show_in_header"
+                  checked={formData.show_in_header}
+                  onCheckedChange={(checked) => setFormData({...formData, show_in_header: checked as boolean})}
+                />
+                <label htmlFor="show_in_header" className="text-sm font-medium">
+                  عرض في الهيدر
+                </label>
+              </div>
+
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   إلغاء
@@ -343,6 +357,7 @@ const BrandsManagement = () => {
               <TableHead>الاسم</TableHead>
               <TableHead>الوصف</TableHead>
               <TableHead>الحالة</TableHead>
+              <TableHead>عرض في الهيدر</TableHead>
               <TableHead>الإجراءات</TableHead>
             </TableRow>
           </TableHeader>
@@ -376,6 +391,13 @@ const BrandsManagement = () => {
                     <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">نشط</span>
                   ) : (
                     <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">غير نشط</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {brand.show_in_header ? (
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">نعم</span>
+                  ) : (
+                    <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">لا</span>
                   )}
                 </TableCell>
                 <TableCell>

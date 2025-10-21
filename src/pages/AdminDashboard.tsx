@@ -13,7 +13,8 @@ import {
   ShoppingCart, 
   Users,
   LogOut,
-  Settings
+  Settings,
+  Bell
 } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -110,6 +111,20 @@ const AdminDashboard = () => {
       icon: Users,
       path: "/admin/customers",
       color: "bg-indigo-500",
+    },
+    {
+      title: "إعدادات النظام",
+      description: "إعدادات عامة للنظام",
+      icon: Settings,
+      path: "/admin/settings",
+      color: "bg-gray-500",
+    },
+    {
+      title: "طلبات الإشعارات",
+      description: "إدارة طلبات إشعارات المنتجات",
+      icon: Bell,
+      path: "/admin/notifications",
+      color: "bg-purple-500",
     },
   ];
 

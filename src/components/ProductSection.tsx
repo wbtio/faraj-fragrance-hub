@@ -12,6 +12,7 @@ interface Product {
   image: string;
   isNew?: boolean;
   onSale?: boolean;
+  stockQuantity?: number;
 }
 
 interface ProductSectionProps {

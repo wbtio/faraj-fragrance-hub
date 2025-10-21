@@ -197,7 +197,7 @@ All colors MUST be HSL.
   
   .animate-gradient-x {
     background-size: 200% 200%;
-    animation: gradient-x 4s ease-in-out infinite;
+    animation: gradient-x 6s ease-in-out infinite;
   }
   
   .animation-delay-150 {
@@ -226,19 +226,4 @@ All colors MUST be HSL.
     animation: scroll-rtl 20s linear infinite;
   }
   
-  @keyframes truck-move {
-    0% {
-      transform: translateX(-60px);
-    }
-    50% {
-      transform: translateX(calc(100vw - 30px));
-    }
-    100% {
-      transform: translateX(-60px);
-    }
-  }
-  
-  .animate-truck-move {
-    animation: truck-move 15s ease-in-out infinite;
-  }
 }

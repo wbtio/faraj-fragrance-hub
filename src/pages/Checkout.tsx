@@ -144,7 +144,7 @@ const Checkout = () => {
 
       // 4. Send order to WhatsApp
       const message = buildWhatsAppMessage(orderData.order_number);
-      const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+      const waUrl = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(message)}`;
       window.open(waUrl, "_blank");
 
       // 5. Clear cart

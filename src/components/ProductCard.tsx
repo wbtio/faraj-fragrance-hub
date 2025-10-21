@@ -1,9 +1,10 @@
-import { ShoppingCart, Heart } from "lucide-react";
+import { ShoppingCart, Heart, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProductCardProps {
   id?: string;
@@ -30,8 +31,10 @@ export const ProductCard = ({
 }: ProductCardProps) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isRequestingNotification, setIsRequestingNotification] = useState(false);
   const { addToCart } = useCart();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleAddToCart = async () => {
     if (!id) return;
@@ -40,6 +43,64 @@ export const ProductCard = ({
       await addToCart(id);
     } finally {
       setIsAddingToCart(false);
+    }
+  };
+
+  const handleRequestNotification = async () => {
+    if (!id) return;
+    
+    // طلب إذن الإشعارات من المتصفح
+    if ('Notification' in window) {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        toast({
+          title: "خطأ",
+          description: "يرجى السماح بالإشعارات لاستخدام هذه الميزة",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    setIsRequestingNotification(true);
+    
+    try {
+      // إرسال رسالة واتساب للمدير
+      const message = `مرحباً، أريد إشعار عند توفر المنتج التالي:
+      
+📦 المنتج: ${name}
+🏷️ البراند: ${brand}
+💰 السعر: ${price.toLocaleString()} د.ع
+
+يرجى إعلامي عند توفر هذا المنتج.`;
+
+      const whatsappUrl = `https://api.whatsapp.com/send?phone=9647842466888&text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
+
+      toast({
+        title: "تم إرسال الطلب",
+        description: "سيتم إعلامك عند توفر المنتج",
+      });
+
+      // حفظ طلب الإشعار في localStorage
+      const notifications = JSON.parse(localStorage.getItem('productNotifications') || '[]');
+      notifications.push({
+        productId: id,
+        productName: name,
+        brand: brand,
+        price: price,
+        requestedAt: new Date().toISOString()
+      });
+      localStorage.setItem('productNotifications', JSON.stringify(notifications));
+
+    } catch (error) {
+      toast({
+        title: "خطأ",
+        description: "حدث خطأ أثناء إرسال الطلب",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRequestingNotification(false);
     }
   };
 
@@ -86,11 +147,11 @@ export const ProductCard = ({
         </button>
 
         {/* Product Image */}
-        <div className="aspect-square overflow-hidden relative -mb-8">
+        <div className="aspect-square overflow-hidden relative bg-gray-50">
           <img
             src={image}
             alt={`${brand} ${name}`}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         </div>
       </div>
@@ -100,7 +161,7 @@ export const ProductCard = ({
         <p className="text-xs text-muted-foreground font-medium mb-1">{brand}</p>
 
         {/* Product Name */}
-        <h3 className="text-sm font-semibold mb-2 line-clamp-2 min-h-[2.5rem]">{name}</h3>
+        <h3 className="text-sm font-semibold mb-1 line-clamp-2 min-h-[2.5rem]">{name}</h3>
 
         {/* Price */}
         <div className="mb-3">
@@ -125,9 +186,11 @@ export const ProductCard = ({
             variant="outline" 
             className="w-full gap-2" 
             size="sm"
-            disabled
+            onClick={handleRequestNotification}
+            disabled={isRequestingNotification}
           >
-            <span>نفذت الكمية</span>
+            <Bell className="h-4 w-4" />
+            <span>{isRequestingNotification ? "جاري الإرسال..." : "أعلمني عند التوفر"}</span>
           </Button>
         ) : (
           <Button 

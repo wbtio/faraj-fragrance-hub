@@ -19,6 +19,8 @@ import HeroManagement from "./pages/admin/HeroManagement";
 import HomepageManagement from "./pages/admin/HomepageManagement";
 import OrdersManagement from "./pages/admin/OrdersManagement";
 import CustomersManagement from "./pages/admin/CustomersManagement";
+import SystemSettings from "./pages/admin/SystemSettings";
+import NotificationRequests from "./pages/admin/NotificationRequests";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import ShippingPolicy from "./pages/ShippingPolicy";
@@ -85,6 +87,16 @@ const App = () => (
             <Route path="/admin/customers" element={
               <ProtectedRoute>
                 <CustomersManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/settings" element={
+              <ProtectedRoute>
+                <SystemSettings />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/notifications" element={
+              <ProtectedRoute>
+                <NotificationRequests />
               </ProtectedRoute>
             } />
             <Route path="/brand/:brandSlug" element={<BrandProducts />} />

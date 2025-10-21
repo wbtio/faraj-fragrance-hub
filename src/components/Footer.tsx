@@ -72,7 +72,7 @@ export const Footer = () => {
             <ul className="space-y-3 text-sm">
               <li className="flex items-center gap-2 text-muted-foreground">
                 <Phone className="h-4 w-4 text-primary" />
-                <a href="https://wa.me/9647842466888" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors" dir="ltr">
+                <a href="https://api.whatsapp.com/send?phone=9647842466888" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors" dir="ltr">
                   +964 784 246 6888
                 </a>
               </li>

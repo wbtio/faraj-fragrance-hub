@@ -99,7 +99,10 @@ const ProductsNew = () => {
         .select(`
           *,
           brands!products_brand_id_fkey (name_ar),
-          categories!products_category_id_fkey (name_ar)
+          categories!products_category_id_fkey (name_ar),
+          product_categories!product_categories_product_id_fkey (
+            categories!product_categories_category_id_fkey (id, name_ar)
+          )
         `)
         .eq("is_active", true);
 
@@ -158,9 +161,15 @@ const ProductsNew = () => {
         return false;
       }
       
-      // Category filter
-      if (selectedCategories.length > 0 && !selectedCategories.includes(product.category_id)) {
-        return false;
+      // Category filter - check if product has any of the selected categories
+      if (selectedCategories.length > 0) {
+        const productCategoryIds = product.product_categories?.map((pc: any) => pc.categories?.id).filter(Boolean) || [];
+        const hasSelectedCategory = selectedCategories.some(categoryId => 
+          productCategoryIds.includes(categoryId) || product.category_id === categoryId
+        );
+        if (!hasSelectedCategory) {
+          return false;
+        }
       }
       
       // Price filter

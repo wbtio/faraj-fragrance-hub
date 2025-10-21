@@ -54,6 +54,7 @@ const ProductDetails = () => {
   const [notifyPhone, setNotifyPhone] = useState("");
   const [productImages, setProductImages] = useState<ProductImage[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [productCategories, setProductCategories] = useState<{id: string, name_ar: string}[]>([]);
 
   useEffect(() => {
     if (id) {
@@ -87,6 +88,18 @@ const ProductDetails = () => {
       
       if (imagesData && imagesData.length > 0) {
         setProductImages(imagesData);
+      }
+
+      // Fetch product categories
+      const { data: categoriesData } = await supabase
+        .from('product_categories')
+        .select(`
+          categories!product_categories_category_id_fkey (id, name_ar)
+        `)
+        .eq('product_id', id);
+
+      if (categoriesData) {
+        setProductCategories(categoriesData.map(item => item.categories).filter(Boolean));
       }
 
       // Fetch related products from same category
@@ -319,9 +332,31 @@ const ProductDetails = () => {
             {/* Name */}
             <h1 className="text-3xl font-bold mb-4">{product.name_ar}</h1>
 
-            {/* Category */}
-            {product.categories && (
-              <p className="text-muted-foreground mb-4">الفئة: {product.categories.name_ar}</p>
+            {/* Categories */}
+            {productCategories.length > 0 && (
+              <div className="mb-4">
+                <p className="text-muted-foreground mb-2">الفئات:</p>
+                <div className="flex flex-wrap gap-2">
+                  {productCategories.map((category) => (
+                    <span key={category.id} className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                      {category.name_ar}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Gender */}
+            {product.gender && (
+              <div className="mb-4">
+                <p className="text-muted-foreground">
+                  الجنس: <span className="font-medium text-foreground">
+                    {product.gender === 'men' ? 'رجالي' : 
+                     product.gender === 'women' ? 'نسائي' : 
+                     product.gender === 'unisex' ? 'للجنسين' : product.gender}
+                  </span>
+                </p>
+              </div>
             )}
 
             {/* Price */}
@@ -346,7 +381,7 @@ const ProductDetails = () => {
 
             {/* Fragrance Notes */}
             {(product.top_notes || product.middle_notes || product.base_notes) && (
-              <div className="mb-6 p-4 bg-muted/50 rounded-lg">
+              <div className="mb-6 p-4 rounded-lg">
                 <h3 className="font-semibold mb-4 text-lg">المكونات العطرية</h3>
                 <div className="space-y-3">
                   {product.top_notes && (
@@ -429,7 +464,7 @@ const ProductDetails = () => {
                 <Truck className="h-5 w-5 text-primary" />
                 <div>
                   <p className="font-semibold text-sm">توصيل مجاني</p>
-                  <p className="text-xs text-muted-foreground">للطلبات فوق 50,000 د.ع</p>
+                  <p className="text-xs text-muted-foreground">لجميع المحافظات</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">

@@ -106,6 +106,8 @@ const ProductsManagement = () => {
     middle_notes: "",
     base_notes: "",
   });
+  
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   useEffect(() => {
     fetchProducts();
@@ -162,6 +164,21 @@ const ProductsManagement = () => {
     }
   };
 
+  const fetchProductCategories = async (productId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("product_categories")
+        .select("category_id")
+        .eq("product_id", productId);
+
+      if (error) throw error;
+      return data?.map(item => item.category_id) || [];
+    } catch (error) {
+      console.error("Error fetching product categories:", error);
+      return [];
+    }
+  };
+
   const uploadImage = async (file: File): Promise<string | null> => {
     try {
       const fileExt = file.name.split('.').pop();
@@ -202,6 +219,27 @@ const ProductsManagement = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate categories
+    if (selectedCategories.length === 0) {
+      toast({
+        title: "خطأ",
+        description: "يرجى اختيار فئة واحدة على الأقل",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validate brand
+    if (!formData.brand_id) {
+      toast({
+        title: "خطأ",
+        description: "يرجى اختيار البراند",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
     setIsUploading(true);
 
@@ -221,6 +259,20 @@ const ProductsManagement = () => {
       const productData = {
         ...formData,
         image_url: imageUrl,
+        // Remove category_id since we're using multiple categories now
+        category_id: null,
+        // Clean up empty string fields that should be null
+        name: formData.name || null,
+        description: formData.description || null,
+        description_ar: formData.description_ar || null,
+        size: formData.size || null,
+        volume: formData.volume || null,
+        weight: formData.weight || null,
+        gender: formData.gender || null,
+        fragrance_type: formData.fragrance_type || null,
+        top_notes: formData.top_notes || null,
+        middle_notes: formData.middle_notes || null,
+        base_notes: formData.base_notes || null,
       };
 
       let productId: string;
@@ -276,6 +328,25 @@ const ProductsManagement = () => {
         }
       }
 
+      // Save product categories
+      if (selectedCategories.length > 0) {
+        // Delete existing categories first
+        await supabase
+          .from('product_categories')
+          .delete()
+          .eq('product_id', productId);
+
+        // Insert new categories
+        const categoryInserts = selectedCategories.map(categoryId => ({
+          product_id: productId,
+          category_id: categoryId
+        }));
+
+        await supabase
+          .from('product_categories')
+          .insert(categoryInserts);
+      }
+
       setIsDialogOpen(false);
       resetForm();
       fetchProducts();
@@ -296,6 +367,11 @@ const ProductsManagement = () => {
     setEditingProduct(product);
     setFormData(product);
     await fetchProductImages(product.id);
+    
+    // Fetch product categories
+    const productCategories = await fetchProductCategories(product.id);
+    setSelectedCategories(productCategories);
+    
     setIsDialogOpen(true);
   };
 
@@ -389,6 +465,7 @@ const ProductsManagement = () => {
     setAdditionalImages([]);
     setAdditionalImagePreviews([]);
     setExistingImages([]);
+    setSelectedCategories([]);
     setFormData({
       name: "",
       name_ar: "",
@@ -495,22 +572,30 @@ const ProductsManagement = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="category_id">الفئة *</Label>
-                  <Select
-                    value={formData.category_id}
-                    onValueChange={(value) => setFormData({...formData, category_id: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="اختر الفئة" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
+                  <Label>الفئات *</Label>
+                  <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border rounded-md p-2">
+                    {categories.map((category) => (
+                      <div key={category.id} className="flex items-center space-x-2 space-x-reverse">
+                        <Checkbox
+                          id={`category-${category.id}`}
+                          checked={selectedCategories.includes(category.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedCategories([...selectedCategories, category.id]);
+                            } else {
+                              setSelectedCategories(selectedCategories.filter(id => id !== category.id));
+                            }
+                          }}
+                        />
+                        <Label htmlFor={`category-${category.id}`} className="text-sm cursor-pointer">
                           {category.name_ar}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                  {selectedCategories.length === 0 && (
+                    <p className="text-sm text-muted-foreground">يرجى اختيار فئة واحدة على الأقل</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
