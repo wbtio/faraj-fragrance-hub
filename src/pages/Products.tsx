@@ -8,6 +8,7 @@ import { ChevronLeft, SlidersHorizontal, X } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { supabase } from "@/lib/supabase";
 import {
   Select,
   SelectContent,
@@ -22,100 +23,42 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import perfume1 from "@/assets/perfume-1.jpg";
-import perfume2 from "@/assets/perfume-2.jpg";
-import perfume3 from "@/assets/perfume-3.jpg";
-import perfume4 from "@/assets/perfume-4.jpg";
-import perfume5 from "@/assets/perfume-5.jpg";
-import perfume6 from "@/assets/perfume-6.jpg";
-import perfume7 from "@/assets/perfume-7.jpg";
-import perfume8 from "@/assets/perfume-8.jpg";
+interface Product {
+  id: string;
+  name_ar: string;
+  price: number;
+  original_price?: number;
+  image_url?: string;
+  is_new?: boolean;
+  on_sale?: boolean;
+  stock_quantity?: number;
+  brand_id: string;
+  category_id: string;
+  brands?: { name_ar: string; slug: string };
+  categories?: { name_ar: string; slug: string };
+}
 
-// Mock data - في المستقبل سيتم جلبها من قاعدة البيانات
-const allProducts = [
-  // عساف
-  { id: "assaf-1", name: "كراون", brand: "عساف", price: 380, image: perfume1, category: "men", gender: "رجالي" },
-  { id: "assaf-2", name: "سبيريت", brand: "عساف", price: 420, image: perfume2, category: "men", gender: "رجالي" },
-  { id: "assaf-3", name: "فرانكل", brand: "عساف", price: 450, image: perfume3, category: "unisex", gender: "للجنسين" },
-  { id: "assaf-4", name: "افيتو", brand: "عساف", price: 390, image: perfume4, category: "men", gender: "رجالي" },
-  { id: "assaf-5", name: "ساروگيت", brand: "عساف", price: 410, image: perfume5, category: "women", gender: "نسائي" },
-  { id: "assaf-6", name: "كولت", brand: "عساف", price: 370, image: perfume6, category: "men", gender: "رجالي" },
-  { id: "assaf-7", name: "مس فلورا", brand: "عساف", price: 430, image: perfume7, category: "women", gender: "نسائي" },
-  { id: "assaf-8", name: "مس ساكورا", brand: "عساف", price: 440, image: perfume8, category: "women", gender: "نسائي" },
-  
-  // لافيرن
-  { id: "laverne-1", name: "لافيرن كلاسيك", brand: "لافيرن", price: 320, image: perfume1, category: "unisex", gender: "للجنسين" },
-  { id: "laverne-2", name: "لافيرن رويال", brand: "لافيرن", price: 380, image: perfume2, category: "men", gender: "رجالي" },
-  { id: "laverne-3", name: "لافيرن بريميوم", brand: "لافيرن", price: 420, image: perfume3, category: "women", gender: "نسائي" },
-  { id: "laverne-4", name: "لافيرن إكسكلوسف", brand: "لافيرن", price: 450, image: perfume4, category: "unisex", gender: "للجنسين" },
-  
-  // ماتش
-  { id: "match-1", name: "ماتش كلاسيك", brand: "ماتش", price: 280, image: perfume5, category: "men", gender: "رجالي", onSale: true },
-  { id: "match-2", name: "ماتش سبورت", brand: "ماتش", price: 300, image: perfume6, category: "men", gender: "رجالي", onSale: true },
-  { id: "match-3", name: "ماتش نايت", brand: "ماتش", price: 320, image: perfume7, category: "men", gender: "رجالي" },
-  { id: "match-4", name: "ماتش إنتنس", brand: "ماتش", price: 290, image: perfume8, category: "unisex", gender: "للجنسين", onSale: true },
-  
-  // ريف
-  { id: "reef-1", name: "ريف 33", brand: "ريف", price: 480, image: perfume1, category: "men", gender: "رجالي" },
-  { id: "reef-2", name: "ريف 29", brand: "ريف", price: 460, image: perfume2, category: "women", gender: "نسائي" },
-  { id: "reef-3", name: "ريف 21", brand: "ريف", price: 440, image: perfume3, category: "unisex", gender: "للجنسين" },
-  { id: "reef-4", name: "ريف 19", brand: "ريف", price: 420, image: perfume4, category: "men", gender: "رجالي" },
-  { id: "reef-5", name: "ريف 11", brand: "ريف", price: 400, image: perfume5, category: "women", gender: "نسائي" },
-  
-  // ثنيان
-  { id: "thunayan-1", name: "روشن", brand: "ثنيان", price: 520, image: perfume6, category: "men", gender: "رجالي" },
-  { id: "thunayan-2", name: "دكتاتور", brand: "ثنيان", price: 550, image: perfume7, category: "men", gender: "رجالي" },
-  { id: "thunayan-3", name: "ممنوع", brand: "ثنيان", price: 480, image: perfume8, category: "men", gender: "رجالي" },
-  { id: "thunayan-4", name: "ال اوف يو", brand: "ثنيان", price: 500, image: perfume1, category: "men", gender: "رجالي" },
-  
-  // قصة
-  { id: "qissa-1", name: "لالونا", brand: "قصة", price: 580, image: perfume2, category: "women", gender: "نسائي" },
-  { id: "qissa-2", name: "ون اند اونلي", brand: "قصة", price: 620, image: perfume3, category: "unisex", gender: "للجنسين" },
-  { id: "qissa-3", name: "هيدسون فالي", brand: "قصة", price: 590, image: perfume4, category: "men", gender: "رجالي" },
-  { id: "qissa-4", name: "امبيريال فالي", brand: "قصة", price: 610, image: perfume5, category: "women", gender: "نسائي" },
-  { id: "qissa-5", name: "سافا", brand: "قصة", price: 570, image: perfume6, category: "women", gender: "نسائي" },
-  
-  // العز للعود
-  { id: "alezoud-1", name: "عود فاخر", brand: "العز للعود", price: 720, image: perfume7, category: "unisex", gender: "للجنسين", isNew: true },
-  { id: "alezoud-2", name: "عود ملكي", brand: "العز للعود", price: 850, image: perfume8, category: "unisex", gender: "للجنسين", isNew: true },
-  { id: "alezoud-3", name: "عود العز", brand: "العز للعود", price: 680, image: perfume1, category: "men", gender: "رجالي" },
-  { id: "alezoud-4", name: "عود مميز", brand: "العز للعود", price: 750, image: perfume2, category: "women", gender: "نسائي" },
-  
-  // دخون
-  { id: "dukhoon-1", name: "اميرالد عود", brand: "دخون", price: 380, image: perfume3, category: "unisex", gender: "للجنسين" },
-  { id: "dukhoon-2", name: "برايم", brand: "دخون", price: 420, image: perfume4, category: "men", gender: "رجالي" },
-  { id: "dukhoon-3", name: "ماكس", brand: "دخون", price: 360, image: perfume5, category: "unisex", gender: "للجنسين" },
-  { id: "dukhoon-4", name: "ذاتي", brand: "دخون", price: 400, image: perfume6, category: "women", gender: "نسائي" },
-  { id: "dukhoon-5", name: "دخون ليذر", brand: "دخون", price: 430, image: perfume7, category: "men", gender: "رجالي" },
-  
-  // ابراق
-  { id: "abraq-1", name: "ابراق الأصيل", brand: "ابراق", price: 350, image: perfume8, category: "men", gender: "رجالي" },
-  { id: "abraq-2", name: "ابراق الفاخر", brand: "ابراق", price: 380, image: perfume1, category: "unisex", gender: "للجنسين" },
-  { id: "abraq-3", name: "ابراق المميز", brand: "ابراق", price: 360, image: perfume2, category: "women", gender: "نسائي" },
-];
+interface Brand {
+  id: string;
+  name_ar: string;
+  slug: string;
+}
 
-const categoryNames: Record<string, string> = {
-  men: "عطور رجالية",
-  women: "عطور نسائية",
-  unisex: "عطور للجنسين",
-  hair: "عطور الشعر",
-  new: "أحدث العطور",
-  offers: "العروض الخاصة",
-};
-
-const allBrands = ["عساف", "لافيرن", "ماتش", "ريف", "ثنيان", "قصة", "العز للعود", "دخون", "ابراق"];
-const allCategories = [
-  { value: "men", label: "عطور رجالية" },
-  { value: "women", label: "عطور نسائية" },
-  { value: "unisex", label: "عطور للجنسين" },
-  { value: "hair", label: "عطور الشعر" },
-];
+interface Category {
+  id: string;
+  name_ar: string;
+  slug: string;
+}
 
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [pageTitle, setPageTitle] = useState<string>("جميع المنتجات");
+  const [allBrands, setAllBrands] = useState<Brand[]>([]);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Filter states
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
@@ -123,49 +66,90 @@ const Products = () => {
   const [priceRange, setPriceRange] = useState<number[]>([0, 1000]);
   const [sortBy, setSortBy] = useState<string>("default");
 
-  const category = searchParams.get("category");
-  const brand = searchParams.get("brand");
+  const categorySlug = searchParams.get("category");
+  const brandSlug = searchParams.get("brand");
 
+  // Fetch data from database
   useEffect(() => {
-    // Initialize filters from URL params
-    if (brand && !selectedBrands.includes(brand)) {
-      setSelectedBrands([brand]);
-    }
-    if (category && !selectedCategories.includes(category)) {
-      setSelectedCategories([category]);
-    }
+    fetchData();
   }, []);
 
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch products
+      const { data: productsData, error: productsError } = await supabase
+        .from("products")
+        .select(`
+          *,
+          brands!products_brand_id_fkey (name_ar, slug),
+          categories!products_category_id_fkey (name_ar, slug)
+        `)
+        .eq("is_active", true);
+
+      if (productsError) throw productsError;
+      setAllProducts(productsData || []);
+
+      // Fetch brands
+      const { data: brandsData, error: brandsError } = await supabase
+        .from("brands")
+        .select("id, name_ar, slug")
+        .eq("is_active", true)
+        .order("display_order");
+
+      if (brandsError) throw brandsError;
+      setAllBrands(brandsData || []);
+
+      // Fetch categories
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from("categories")
+        .select("id, name_ar, slug")
+        .eq("is_active", true)
+        .order("display_order");
+
+      if (categoriesError) throw categoriesError;
+      setAllCategories(categoriesData || []);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
+    if (allProducts.length === 0) return;
+    
     let products = [...allProducts];
 
-    // Filter by URL params first
-    if (category) {
-      if (category === "new") {
-        products = products.filter(p => p.isNew);
+    // Filter by URL params first (using slugs)
+    if (categorySlug) {
+      if (categorySlug === "new") {
+        products = products.filter(p => p.is_new);
         setPageTitle("أحدث العطور");
-      } else if (category === "offers") {
-        products = products.filter(p => p.onSale);
+      } else if (categorySlug === "offers") {
+        products = products.filter(p => p.on_sale);
         setPageTitle("العروض الخاصة");
       } else {
-        products = products.filter(p => p.category === category);
-        setPageTitle(categoryNames[category] || "المنتجات");
+        products = products.filter(p => p.categories?.slug === categorySlug);
+        const cat = allCategories.find(c => c.slug === categorySlug);
+        setPageTitle(cat?.name_ar || "المنتجات");
       }
     }
 
-    if (brand) {
-      products = products.filter(p => p.brand === brand);
-      setPageTitle(brand);
+    if (brandSlug) {
+      products = products.filter(p => p.brands?.slug === brandSlug);
+      const brand = allBrands.find(b => b.slug === brandSlug);
+      setPageTitle(brand?.name_ar || "المنتجات");
     }
 
-    // Apply selected brands filter
+    // Apply selected brands filter (using IDs)
     if (selectedBrands.length > 0) {
-      products = products.filter(p => selectedBrands.includes(p.brand));
+      products = products.filter(p => p.brand_id && selectedBrands.includes(p.brand_id));
     }
 
-    // Apply selected categories filter
+    // Apply selected categories filter (using IDs)
     if (selectedCategories.length > 0) {
-      products = products.filter(p => selectedCategories.includes(p.category));
+      products = products.filter(p => p.category_id && selectedCategories.includes(p.category_id));
     }
 
     // Apply price range filter
@@ -177,11 +161,11 @@ const Products = () => {
     } else if (sortBy === "price-desc") {
       products.sort((a, b) => b.price - a.price);
     } else if (sortBy === "name") {
-      products.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+      products.sort((a, b) => a.name_ar.localeCompare(b.name_ar, 'ar'));
     }
 
     setFilteredProducts(products);
-  }, [category, brand, selectedBrands, selectedCategories, priceRange, sortBy]);
+  }, [allProducts, categorySlug, brandSlug, selectedBrands, selectedCategories, priceRange, sortBy, allCategories, allBrands]);
 
   const handleBrandToggle = (brandName: string) => {
     setSelectedBrands(prev =>
@@ -235,17 +219,17 @@ const Products = () => {
         <Label className="text-base font-semibold">الفئات</Label>
         <div className="space-y-2">
           {allCategories.map((cat) => (
-            <div key={cat.value} className="flex items-center space-x-2 space-x-reverse">
+            <div key={cat.id} className="flex items-center space-x-2 space-x-reverse">
               <Checkbox
-                id={`cat-${cat.value}`}
-                checked={selectedCategories.includes(cat.value)}
-                onCheckedChange={() => handleCategoryToggle(cat.value)}
+                id={`cat-${cat.id}`}
+                checked={selectedCategories.includes(cat.id)}
+                onCheckedChange={() => handleCategoryToggle(cat.id)}
               />
               <label
-                htmlFor={`cat-${cat.value}`}
+                htmlFor={`cat-${cat.id}`}
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
               >
-                {cat.label}
+                {cat.name_ar}
               </label>
             </div>
           ))}
@@ -256,18 +240,18 @@ const Products = () => {
       <div className="space-y-3">
         <Label className="text-base font-semibold">البراندات</Label>
         <div className="space-y-2 max-h-64 overflow-y-auto">
-          {allBrands.map((brandName) => (
-            <div key={brandName} className="flex items-center space-x-2 space-x-reverse">
+          {allBrands.map((brand) => (
+            <div key={brand.id} className="flex items-center space-x-2 space-x-reverse">
               <Checkbox
-                id={`brand-${brandName}`}
-                checked={selectedBrands.includes(brandName)}
-                onCheckedChange={() => handleBrandToggle(brandName)}
+                id={`brand-${brand.id}`}
+                checked={selectedBrands.includes(brand.id)}
+                onCheckedChange={() => handleBrandToggle(brand.id)}
               />
               <label
-                htmlFor={`brand-${brandName}`}
+                htmlFor={`brand-${brand.id}`}
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
               >
-                {brandName}
+                {brand.name_ar}
               </label>
             </div>
           ))}
@@ -281,6 +265,21 @@ const Products = () => {
       </Button>
     </div>
   );
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background" dir="rtl">
+        <Header />
+        <div className="container mx-auto px-4 py-12">
+          <div className="text-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
+            <p className="mt-4 text-muted-foreground">جاري التحميل...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
@@ -349,7 +348,18 @@ const Products = () => {
             {filteredProducts.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                 {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} {...product} />
+                  <ProductCard 
+                    key={product.id}
+                    id={product.id}
+                    name={product.name_ar}
+                    brand={product.brands?.name_ar || ""}
+                    price={product.price}
+                    originalPrice={product.original_price}
+                    image={product.image_url || ""}
+                    isNew={product.is_new}
+                    onSale={product.on_sale}
+                    stockQuantity={product.stock_quantity}
+                  />
                 ))}
               </div>
             ) : (
