@@ -12,6 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ShoppingCart, CreditCard, Truck, MapPin, Phone, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { sendTelegramOrderNotification } from "@/lib/telegram";
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -142,15 +143,36 @@ const Checkout = () => {
 
       if (itemsError) throw itemsError;
 
-      // 4. Send order to WhatsApp
+      // 4. Send Telegram notification to admin
+      try {
+        await sendTelegramOrderNotification({
+          orderNumber: orderData.order_number,
+          customerName: formData.fullName,
+          customerPhone: formData.phone,
+          customerCity: formData.city,
+          totalAmount: cartTotal,
+          items: cartItems.map(item => ({
+            name: item.product?.name_ar || "منتج",
+            quantity: item.quantity,
+            price: item.product?.price || 0,
+          })),
+          notes: formData.notes || undefined,
+        });
+        console.log('✅ Telegram notification sent');
+      } catch (telegramError) {
+        console.error('⚠️ Failed to send Telegram notification:', telegramError);
+        // Don't fail the order if Telegram fails
+      }
+
+      // 5. Send order to WhatsApp
       const message = buildWhatsAppMessage(orderData.order_number);
       const waUrl = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(message)}`;
       window.open(waUrl, "_blank");
 
-      // 5. Clear cart
+      // 6. Clear cart
       await clearCart();
 
-      // 6. Show success message
+      // 7. Show success message
       toast({
         title: "تم إتمام الطلب بنجاح! 🎉",
         description: `رقم الطلب: ${orderData.order_number}`,
