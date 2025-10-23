@@ -28,6 +28,7 @@ interface Product {
   top_notes?: string;
   middle_notes?: string;
   base_notes?: string;
+  gender?: string;
   brands?: { name_ar: string };
   categories?: { name_ar: string };
 }
@@ -99,7 +100,13 @@ const ProductDetails = () => {
         .eq('product_id', id);
 
       if (categoriesData) {
-        setProductCategories(categoriesData.map(item => item.categories).filter(Boolean));
+        const categories: { id: string; name_ar: string }[] = [];
+        categoriesData.forEach(item => {
+          if (item.categories && typeof item.categories === 'object' && 'id' in item.categories && 'name_ar' in item.categories) {
+            categories.push(item.categories as { id: string; name_ar: string });
+          }
+        });
+        setProductCategories(categories);
       }
 
       // Fetch related products from same category
@@ -409,9 +416,9 @@ const ProductDetails = () => {
             {/* Stock Status */}
             <div className="mb-6">
               {product.stock_quantity && product.stock_quantity > 0 ? (
-                <p className="text-green-600 font-semibold">متوفر في المخزون</p>
+                <p className="text-green-600 font-semibold">متوفر</p>
               ) : (
-                <p className="text-destructive font-semibold">غير متوفر حالياً</p>
+                <p className="text-destructive font-semibold">نفذ</p>
               )}
             </div>
 

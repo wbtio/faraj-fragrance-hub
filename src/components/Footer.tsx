@@ -12,7 +12,7 @@ export const Footer = () => {
             <div className="mb-4">
               <img 
                 src="/logo.svg" 
-                alt="فرح لبيع العطور" 
+                alt="فوح لبيع العطور" 
                 className="h-12 w-auto"
                 style={{ filter: 'brightness(0)' }}
               />
@@ -102,7 +102,7 @@ export const Footer = () => {
 
         {/* Copyright */}
         <div className="pt-8 border-t border-border text-center text-sm text-muted-foreground">
-          <p>© 2024 فرح لبيع العطور. جميع الحقوق محفوظة.</p>
+          <p>© 2024 فوح لبيع العطور. جميع الحقوق محفوظة.</p>
         </div>
       </div>
     </footer>
