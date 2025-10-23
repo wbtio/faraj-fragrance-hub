@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import AdminHeader from "@/components/AdminHeader";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Eye, MessageCircle, Phone } from "lucide-react";
+import { Search, Eye, MessageCircle, Phone, Bell, BellOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Order {
@@ -62,16 +62,99 @@ const OrdersManagement = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const lastOrderCountRef = useRef<number>(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     fetchOrders();
+    requestNotificationPermission();
+    
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(() => {
+      fetchOrders(true); // Silent refresh
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
     filterOrders();
   }, [orders, searchTerm, statusFilter]);
 
-  const fetchOrders = async () => {
+  const requestNotificationPermission = async () => {
+    if ("Notification" in window) {
+      const permission = await Notification.requestPermission();
+      setNotificationsEnabled(permission === "granted");
+    }
+  };
+
+  const playNotificationSound = () => {
+    // Create notification sound using Web Audio API
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = 800;
+    oscillator.type = 'sine';
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.5);
+    
+    // Repeat 3 times
+    setTimeout(() => {
+      const osc2 = audioContext.createOscillator();
+      const gain2 = audioContext.createGain();
+      osc2.connect(gain2);
+      gain2.connect(audioContext.destination);
+      osc2.frequency.value = 1000;
+      osc2.type = 'sine';
+      gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      osc2.start(audioContext.currentTime);
+      osc2.stop(audioContext.currentTime + 0.5);
+    }, 600);
+    
+    setTimeout(() => {
+      const osc3 = audioContext.createOscillator();
+      const gain3 = audioContext.createGain();
+      osc3.connect(gain3);
+      gain3.connect(audioContext.destination);
+      osc3.frequency.value = 1200;
+      osc3.type = 'sine';
+      gain3.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gain3.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      osc3.start(audioContext.currentTime);
+      osc3.stop(audioContext.currentTime + 0.5);
+    }, 1200);
+  };
+
+  const showNewOrderNotification = (order: Order) => {
+    if (notificationsEnabled && "Notification" in window) {
+      const notification = new Notification("طلب جديد! 🛍️", {
+        body: `طلب رقم ${order.order_number}\nالعميل: ${order.customer_name}\nالهاتف: ${order.customer_phone}\nالمبلغ: ${order.total_amount.toLocaleString()} د.ع`,
+        icon: "/logo.svg",
+        tag: order.id,
+        requireInteraction: true,
+      });
+
+      notification.onclick = () => {
+        window.focus();
+        handleViewDetails(order);
+        notification.close();
+      };
+
+      playNotificationSound();
+    }
+  };
+
+  const fetchOrders = async (silent = false) => {
     try {
       const { data, error } = await supabase
         .from("orders")
@@ -79,14 +162,31 @@ const OrdersManagement = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setOrders(data || []);
+      
+      const newOrders = data || [];
+      
+      // Check for new orders (only if not first load)
+      if (lastOrderCountRef.current > 0 && newOrders.length > lastOrderCountRef.current) {
+        const newOrdersCount = newOrders.length - lastOrderCountRef.current;
+        const latestOrders = newOrders.slice(0, newOrdersCount);
+        
+        // Show notification for each new order
+        latestOrders.forEach(order => {
+          showNewOrderNotification(order);
+        });
+      }
+      
+      lastOrderCountRef.current = newOrders.length;
+      setOrders(newOrders);
     } catch (error) {
       console.error("Error fetching orders:", error);
-      toast({
-        title: "خطأ",
-        description: "فشل تحميل الطلبات",
-        variant: "destructive",
-      });
+      if (!silent) {
+        toast({
+          title: "خطأ",
+          description: "فشل تحميل الطلبات",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -192,11 +292,21 @@ const OrdersManagement = () => {
     <div className="min-h-screen bg-background">
       <AdminHeader />
       <div className="container mx-auto px-4 py-8" dir="rtl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">إدارة الطلبات</h1>
-        <p className="text-muted-foreground mt-1">
-          عرض وإدارة جميع الطلبات مع إمكانية التواصل عبر واتساب
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">إدارة الطلبات</h1>
+          <p className="text-muted-foreground mt-1">
+            عرض وإدارة جميع الطلبات مع إمكانية التواصل عبر واتساب
+          </p>
+        </div>
+        <Button
+          variant={notificationsEnabled ? "default" : "outline"}
+          onClick={requestNotificationPermission}
+          className="gap-2"
+        >
+          {notificationsEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+          {notificationsEnabled ? "الإشعارات مفعلة" : "تفعيل الإشعارات"}
+        </Button>
       </div>
 
       {/* Filters */}
