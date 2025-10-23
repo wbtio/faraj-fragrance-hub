@@ -85,11 +85,11 @@ export const Header = () => {
     { label: "الرئيسية", href: "/" },
     ...categories.map(cat => ({
       label: cat.name_ar,
-      href: `/products?category=${cat.slug}`
+      href: `/products?category=${encodeURIComponent(cat.name_ar)}`
     })),
     ...brands.slice(0, maxHeaderBrands).map(brand => ({
       label: brand.name_ar,
-      href: `/products?brand=${brand.slug}`
+      href: `/products?brand=${encodeURIComponent(brand.name_ar)}`
     }))
   ];
 

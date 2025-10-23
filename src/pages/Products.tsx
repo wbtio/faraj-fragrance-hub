@@ -66,8 +66,8 @@ const Products = () => {
   const [priceRange, setPriceRange] = useState<number[]>([0, 1000]);
   const [sortBy, setSortBy] = useState<string>("default");
 
-  const categorySlug = searchParams.get("category");
-  const brandSlug = searchParams.get("brand");
+  const categoryName = searchParams.get("category");
+  const brandName = searchParams.get("brand");
 
   // Fetch data from database
   useEffect(() => {
@@ -121,25 +121,23 @@ const Products = () => {
     
     let products = [...allProducts];
 
-    // Filter by URL params first (using slugs)
-    if (categorySlug) {
-      if (categorySlug === "new") {
+    // Filter by URL params first (using Arabic names)
+    if (categoryName) {
+      if (categoryName === "new") {
         products = products.filter(p => p.is_new);
         setPageTitle("أحدث العطور");
-      } else if (categorySlug === "offers") {
+      } else if (categoryName === "offers") {
         products = products.filter(p => p.on_sale);
         setPageTitle("العروض الخاصة");
       } else {
-        products = products.filter(p => p.categories?.slug === categorySlug);
-        const cat = allCategories.find(c => c.slug === categorySlug);
-        setPageTitle(cat?.name_ar || "المنتجات");
+        products = products.filter(p => p.categories?.name_ar === categoryName);
+        setPageTitle(categoryName);
       }
     }
 
-    if (brandSlug) {
-      products = products.filter(p => p.brands?.slug === brandSlug);
-      const brand = allBrands.find(b => b.slug === brandSlug);
-      setPageTitle(brand?.name_ar || "المنتجات");
+    if (brandName) {
+      products = products.filter(p => p.brands?.name_ar === brandName);
+      setPageTitle(brandName);
     }
 
     // Apply selected brands filter (using IDs)
@@ -165,7 +163,7 @@ const Products = () => {
     }
 
     setFilteredProducts(products);
-  }, [allProducts, categorySlug, brandSlug, selectedBrands, selectedCategories, priceRange, sortBy, allCategories, allBrands]);
+  }, [allProducts, categoryName, brandName, selectedBrands, selectedCategories, priceRange, sortBy, allCategories, allBrands]);
 
   const handleBrandToggle = (brandName: string) => {
     setSelectedBrands(prev =>
