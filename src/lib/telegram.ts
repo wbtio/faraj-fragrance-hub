@@ -61,8 +61,8 @@ function formatOrderMessage(message: TelegramMessage): string {
 export async function sendTelegramOrderNotification(message: TelegramMessage): Promise<boolean> {
   try {
     // Use hardcoded values for now
-    const botToken = '8206458832:AAG5SRnqhoLoELp0xgKEIdpvVil938ra0k0';
-    const chatId = '7622286030';
+    const botToken = '8278675625:AAFLuvmD0wNGixNrfrxTq_3cCXBNj09iCR8';
+    const chatId = '187929059';
 
     if (!botToken || !chatId) {
       console.warn('⚠️ Telegram bot token or chat ID not configured');
@@ -111,8 +111,8 @@ export async function sendTelegramOrderNotification(message: TelegramMessage): P
  */
 export async function testTelegramConnection(botToken?: string, chatId?: string): Promise<boolean> {
   try {
-    const token = botToken || '8206458832:AAG5SRnqhoLoELp0xgKEIdpvVil938ra0k0';
-    const chat = chatId || '7622286030';
+    const token = botToken || '8278675625:AAFLuvmD0wNGixNrfrxTq_3cCXBNj09iCR8';
+    const chat = chatId || '187929059';
 
     const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
