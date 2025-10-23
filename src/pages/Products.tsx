@@ -74,6 +74,23 @@ const Products = () => {
     fetchData();
   }, []);
 
+  // Auto-select filters based on URL parameters
+  useEffect(() => {
+    if (brandName && allBrands.length > 0) {
+      const brand = allBrands.find(b => b.name_ar === brandName);
+      if (brand && !selectedBrands.includes(brand.id)) {
+        setSelectedBrands([brand.id]);
+      }
+    }
+    
+    if (categoryName && allCategories.length > 0 && categoryName !== "new" && categoryName !== "offers") {
+      const category = allCategories.find(c => c.name_ar === categoryName);
+      if (category && !selectedCategories.includes(category.id)) {
+        setSelectedCategories([category.id]);
+      }
+    }
+  }, [brandName, categoryName, allBrands, allCategories]);
+
   const fetchData = async () => {
     setIsLoading(true);
     try {
