@@ -136,21 +136,37 @@ const OrdersManagement = () => {
   };
 
   const showNewOrderNotification = (order: Order) => {
-    if (notificationsEnabled && "Notification" in window) {
-      const notification = new Notification("طلب جديد! 🛍️", {
-        body: `طلب رقم ${order.order_number}\nالعميل: ${order.customer_name}\nالهاتف: ${order.customer_phone}\nالمبلغ: ${order.total_amount.toLocaleString()} د.ع`,
-        icon: "/logo.svg",
-        tag: order.id,
-        requireInteraction: true,
-      });
+    console.log("🔔 showNewOrderNotification called:", {
+      notificationsEnabled,
+      hasNotificationAPI: "Notification" in window,
+      permission: "Notification" in window ? Notification.permission : "N/A",
+      order: order.order_number
+    });
 
-      notification.onclick = () => {
-        window.focus();
-        handleViewDetails(order);
-        notification.close();
-      };
+    if ("Notification" in window && Notification.permission === "granted") {
+      try {
+        const notification = new Notification("طلب جديد! 🛍️", {
+          body: `طلب رقم ${order.order_number}\nالعميل: ${order.customer_name}\nالهاتف: ${order.customer_phone}\nالمبلغ: ${order.total_amount.toLocaleString()} د.ع`,
+          icon: "/logo.svg",
+          tag: order.id,
+          requireInteraction: true,
+        });
 
-      playNotificationSound();
+        console.log("✅ Notification created successfully");
+
+        notification.onclick = () => {
+          window.focus();
+          handleViewDetails(order);
+          notification.close();
+        };
+
+        playNotificationSound();
+        console.log("🔊 Sound played");
+      } catch (error) {
+        console.error("❌ Error creating notification:", error);
+      }
+    } else {
+      console.warn("⚠️ Notifications not available or not granted");
     }
   };
 
@@ -165,13 +181,23 @@ const OrdersManagement = () => {
       
       const newOrders = data || [];
       
-      // Check for new orders (only if not first load)
+      console.log("📦 Fetching orders:", {
+        previousCount: lastOrderCountRef.current,
+        currentCount: newOrders.length,
+        notificationsEnabled,
+        silent
+      });
+      
+      // Check for new orders (skip first load to avoid showing notification for existing orders)
       if (lastOrderCountRef.current > 0 && newOrders.length > lastOrderCountRef.current) {
         const newOrdersCount = newOrders.length - lastOrderCountRef.current;
         const latestOrders = newOrders.slice(0, newOrdersCount);
         
+        console.log("🔔 New orders detected:", newOrdersCount, latestOrders);
+        
         // Show notification for each new order
         latestOrders.forEach(order => {
+          console.log("📢 Showing notification for order:", order.order_number);
           showNewOrderNotification(order);
         });
       }
@@ -299,14 +325,37 @@ const OrdersManagement = () => {
             عرض وإدارة جميع الطلبات مع إمكانية التواصل عبر واتساب
           </p>
         </div>
-        <Button
-          variant={notificationsEnabled ? "default" : "outline"}
-          onClick={requestNotificationPermission}
-          className="gap-2"
-        >
-          {notificationsEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
-          {notificationsEnabled ? "الإشعارات مفعلة" : "تفعيل الإشعارات"}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant={notificationsEnabled ? "default" : "outline"}
+            onClick={requestNotificationPermission}
+            className="gap-2"
+          >
+            {notificationsEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+            {notificationsEnabled ? "الإشعارات مفعلة" : "تفعيل الإشعارات"}
+          </Button>
+          {notificationsEnabled && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                const testOrder: Order = {
+                  id: "test-" + Date.now(),
+                  order_number: "TEST-001",
+                  customer_name: "عميل تجريبي",
+                  customer_phone: "07700000000",
+                  total_amount: 50000,
+                  status: "pending",
+                  payment_status: "pending",
+                  created_at: new Date().toISOString()
+                };
+                showNewOrderNotification(testOrder);
+              }}
+              className="gap-2"
+            >
+              🔔 اختبار الإشعار
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Filters */}
