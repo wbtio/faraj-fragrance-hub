@@ -61,7 +61,7 @@ function formatOrderMessage(message: TelegramMessage): string {
 export async function sendTelegramOrderNotification(message: TelegramMessage): Promise<boolean> {
   try {
     // Use hardcoded values for now
-    const botToken = '8278675625:AAFLuvmD0wNGixNrfrxTq_3cCXBNj09iCR8';
+    const botToken = '7971557282:AAElLgV_jSAvu3K9BJFwJQyKN-dBZf-lH6U';
     const chatId = '187929059';
 
     if (!botToken || !chatId) {
@@ -111,7 +111,7 @@ export async function sendTelegramOrderNotification(message: TelegramMessage): P
  */
 export async function testTelegramConnection(botToken?: string, chatId?: string): Promise<boolean> {
   try {
-    const token = botToken || '8278675625:AAFLuvmD0wNGixNrfrxTq_3cCXBNj09iCR8';
+    const token = botToken || '7971557282:AAElLgV_jSAvu3K9BJFwJQyKN-dBZf-lH6U';
     const chat = chatId || '187929059';
 
     const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
