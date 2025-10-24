@@ -137,14 +137,6 @@ const Cart = () => {
                         </Button>
                       </div>
                     </div>
-
-                    {/* Item Total - Right Side for RTL */}
-                    <div className="text-right min-w-[120px] flex flex-col items-end">
-                      <p className="text-sm text-muted-foreground mb-1">المجموع</p>
-                      <p className="text-xl md:text-2xl font-bold text-primary whitespace-nowrap">
-                        {((item.product?.price || 0) * item.quantity).toLocaleString()} د.ع
-                      </p>
-                    </div>
                   </div>
                 </CardContent>
               </Card>

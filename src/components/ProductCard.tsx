@@ -38,11 +38,6 @@ export const ProductCard = ({
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Update stock when stockQuantity prop changes
-  useEffect(() => {
-    setCurrentStock(stockQuantity);
-  }, [stockQuantity]);
-
   // Fetch current stock from database
   const fetchCurrentStock = async () => {
     if (!id) return;
@@ -60,6 +55,11 @@ export const ProductCard = ({
       console.error('Error fetching stock:', error);
     }
   };
+
+  // Fetch stock on mount and when cart changes
+  useEffect(() => {
+    fetchCurrentStock();
+  }, [id, cartItems]);
 
   // Calculate quantity in cart for this product
   const getQuantityInCart = () => {
