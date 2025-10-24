@@ -89,8 +89,31 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const addToCart = async (productId: string) => {
     setIsLoading(true);
     try {
+      // Get product stock quantity
+      const { data: productData, error: productError } = await supabase
+        .from("products")
+        .select("stock_quantity")
+        .eq("id", productId)
+        .single();
+
+      if (productError) throw productError;
+
+      const availableStock = productData?.stock_quantity || 0;
+
       // Check if product already in cart
       const existingItem = cartItems.find(item => item.product_id === productId);
+      const currentCartQuantity = existingItem ? existingItem.quantity : 0;
+
+      // Check if adding one more would exceed stock
+      if (currentCartQuantity + 1 > availableStock) {
+        toast({
+          title: "الكمية غير متوفرة",
+          description: `عذراً، الكمية المتوفرة في المخزون: ${availableStock} فقط`,
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
 
       if (existingItem) {
         // Update quantity
@@ -170,6 +193,34 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     setIsLoading(true);
     try {
+      // Get the cart item to find product_id
+      const cartItem = cartItems.find(item => item.id === cartItemId);
+      if (!cartItem) {
+        throw new Error("Cart item not found");
+      }
+
+      // Get product stock quantity
+      const { data: productData, error: productError } = await supabase
+        .from("products")
+        .select("stock_quantity")
+        .eq("id", cartItem.product_id)
+        .single();
+
+      if (productError) throw productError;
+
+      const availableStock = productData?.stock_quantity || 0;
+
+      // Check if requested quantity exceeds stock
+      if (quantity > availableStock) {
+        toast({
+          title: "الكمية غير متوفرة",
+          description: `عذراً، الكمية المتوفرة في المخزون: ${availableStock} فقط`,
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       const { error } = await supabase
         .from("cart")
         .update({ 
