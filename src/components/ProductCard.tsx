@@ -1,10 +1,11 @@
 import { ShoppingCart, Heart, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 interface ProductCardProps {
   id?: string;
@@ -32,15 +33,47 @@ export const ProductCard = ({
   const [isFavorite, setIsFavorite] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isRequestingNotification, setIsRequestingNotification] = useState(false);
-  const { addToCart } = useCart();
+  const [currentStock, setCurrentStock] = useState(stockQuantity);
+  const { addToCart, cartItems } = useCart();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Update stock when stockQuantity prop changes
+  useEffect(() => {
+    setCurrentStock(stockQuantity);
+  }, [stockQuantity]);
+
+  // Fetch current stock from database
+  const fetchCurrentStock = async () => {
+    if (!id) return;
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('stock_quantity')
+        .eq('id', id)
+        .single();
+      
+      if (!error && data) {
+        setCurrentStock(data.stock_quantity || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching stock:', error);
+    }
+  };
+
+  // Calculate quantity in cart for this product
+  const getQuantityInCart = () => {
+    const cartItem = cartItems.find(item => item.product_id === id);
+    return cartItem ? cartItem.quantity : 0;
+  };
 
   const handleAddToCart = async () => {
     if (!id) return;
     setIsAddingToCart(true);
     try {
       await addToCart(id);
+      // Refresh stock after adding to cart
+      await fetchCurrentStock();
     } finally {
       setIsAddingToCart(false);
     }
@@ -114,7 +147,10 @@ export const ProductCard = ({
     ? Math.round(((originalPrice - price) / originalPrice) * 100)
     : 0;
 
-  const isOutOfStock = stockQuantity <= 0;
+  // Check if product is out of stock (considering items in cart)
+  const quantityInCart = getQuantityInCart();
+  const availableStock = currentStock - quantityInCart;
+  const isOutOfStock = availableStock <= 0;
 
   return (
     <Card className="group overflow-hidden shadow-soft hover:shadow-luxury transition-all duration-300 border-border">
