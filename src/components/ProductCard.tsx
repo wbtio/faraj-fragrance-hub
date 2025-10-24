@@ -56,10 +56,12 @@ export const ProductCard = ({
     }
   };
 
-  // Fetch stock on mount and when cart changes
+  // Fetch stock on mount only
   useEffect(() => {
-    fetchCurrentStock();
-  }, [id, cartItems]);
+    if (id) {
+      fetchCurrentStock();
+    }
+  }, [id]);
 
   // Calculate quantity in cart for this product
   const getQuantityInCart = () => {
