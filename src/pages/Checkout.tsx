@@ -143,7 +143,32 @@ const Checkout = () => {
 
       if (itemsError) throw itemsError;
 
-      // 4. Send Telegram notification to admin
+      // 4. Update stock quantities
+      for (const item of cartItems) {
+        const { data: productData, error: fetchError } = await supabase
+          .from("products")
+          .select("stock_quantity")
+          .eq("id", item.product_id)
+          .single();
+
+        if (fetchError) {
+          console.error("Error fetching product stock:", fetchError);
+          continue;
+        }
+
+        const newStock = (productData?.stock_quantity || 0) - item.quantity;
+
+        const { error: updateError } = await supabase
+          .from("products")
+          .update({ stock_quantity: Math.max(0, newStock) })
+          .eq("id", item.product_id);
+
+        if (updateError) {
+          console.error("Error updating stock:", updateError);
+        }
+      }
+
+      // 5. Send Telegram notification to admin
       try {
         await sendTelegramOrderNotification({
           orderNumber: orderData.order_number,
@@ -164,21 +189,21 @@ const Checkout = () => {
         // Don't fail the order if Telegram fails
       }
 
-      // 5. Send order to WhatsApp
+      // 6. Send order to WhatsApp
       const message = buildWhatsAppMessage(orderData.order_number);
       const waUrl = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(message)}`;
       window.open(waUrl, "_blank");
 
-      // 6. Clear cart
+      // 7. Clear cart
       await clearCart();
 
-      // 7. Show success message
+      // 8. Show success message
       toast({
         title: "تم إتمام الطلب بنجاح! 🎉",
         description: `رقم الطلب: ${orderData.order_number}`,
       });
 
-      // 7. Redirect to success page or home
+      // 9. Redirect to success page or home
       setTimeout(() => {
         navigate("/");
       }, 2000);

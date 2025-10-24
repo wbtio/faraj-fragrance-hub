@@ -1,8 +1,10 @@
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { HeroSection } from "@/components/HeroSection";
 import { ProductSection } from "@/components/ProductSection";
 import { PerfumeCategoryCarousel } from "@/components/PerfumeCategoryCarousel";
+import { supabase } from "@/lib/supabase";
 import heroBanner from "@/assets/hero-banner.jpg";
 import perfume1 from "@/assets/perfume-1.jpg";
 import perfume2 from "@/assets/perfume-2.jpg";
@@ -22,7 +24,75 @@ import categoryLaverne from "@/assets/category-laverne.jpg";
 import categoryAbraq from "@/assets/category-abraq.jpg";
 import categoryMatch from "@/assets/category-match.jpg";
 import categoryNiche from "@/assets/category-niche.jpg";
+interface Product {
+  id: string;
+  name_ar: string;
+  price: number;
+  original_price?: number;
+  image_url?: string;
+  is_new?: boolean;
+  on_sale?: boolean;
+  stock_quantity?: number;
+  brands?: { name_ar: string } | { name_ar: string }[];
+}
+
 const Index = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          id,
+          name_ar,
+          price,
+          original_price,
+          image_url,
+          is_new,
+          on_sale,
+          stock_quantity,
+          brands (name_ar)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getProductsByBrand = (brandName: string) => {
+    return products
+      .filter(p => {
+        const brand = Array.isArray(p.brands) ? p.brands[0] : p.brands;
+        return brand?.name_ar === brandName;
+      })
+      .slice(0, 4)
+      .map(p => {
+        const brand = Array.isArray(p.brands) ? p.brands[0] : p.brands;
+        return {
+          id: p.id,
+          name: p.name_ar,
+          brand: brand?.name_ar || '',
+          price: p.price,
+          originalPrice: p.original_price,
+          image: p.image_url || '',
+          isNew: p.is_new,
+          onSale: p.on_sale,
+          stockQuantity: p.stock_quantity || 0
+        };
+      });
+  };
+
   const perfumeCategories = [{
     id: "assaf",
     title: "عساف",
@@ -231,12 +301,7 @@ const Index = () => {
           <ProductSection
             title="عساف"
             description="إما العظمة، او لا شيء توقيع عربي يحمل عبق التراث وأناقة الحاضر"
-            products={[
-              { id: "assaf-1", name: "كراون", brand: "عساف", price: 380, image: perfume1 },
-              { id: "assaf-2", name: "سبيريت", brand: "عساف", price: 420, image: perfume2 },
-              { id: "assaf-3", name: "فرانكل", brand: "عساف", price: 450, image: perfume3 },
-              { id: "assaf-4", name: "افيتو", brand: "عساف", price: 390, image: perfume4 },
-            ]}
+            products={getProductsByBrand("عساف")}
             viewMoreLink="/products?brand=عساف"
           />
 
@@ -244,12 +309,7 @@ const Index = () => {
           <ProductSection
             title="لافيرن"
             description="رحلة في الطبيعة عطور تُلهم الحواس وتترك أثراً لا يُنسى"
-            products={[
-              { id: "laverne-1", name: "لافيرن كلاسيك", brand: "لافيرن", price: 320, image: perfume5 },
-              { id: "laverne-2", name: "لافيرن رويال", brand: "لافيرن", price: 380, image: perfume6 },
-              { id: "laverne-3", name: "لافيرن بريميوم", brand: "لافيرن", price: 420, image: perfume7 },
-              { id: "laverne-4", name: "لافيرن إكسكلوسف", brand: "لافيرن", price: 450, image: perfume8 },
-            ]}
+            products={getProductsByBrand("لافيرن")}
             viewMoreLink="/products?brand=لافيرن"
           />
 
@@ -257,12 +317,7 @@ const Index = () => {
           <ProductSection
             title="ماتش"
             description="الطيب الأصلي بالسعر الأصلي لأن الفخامة ما لازم تكون غالية"
-            products={[
-              { id: "match-1", name: "ماتش كلاسيك", brand: "ماتش", price: 280, image: perfume1, onSale: true },
-              { id: "match-2", name: "ماتش سبورت", brand: "ماتش", price: 300, image: perfume2, onSale: true },
-              { id: "match-3", name: "ماتش نايت", brand: "ماتش", price: 320, image: perfume3 },
-              { id: "match-4", name: "ماتش إنتنس", brand: "ماتش", price: 290, image: perfume4, onSale: true },
-            ]}
+            products={getProductsByBrand("ماتش")}
             viewMoreLink="/products?brand=ماتش"
           />
 
@@ -270,12 +325,7 @@ const Index = () => {
           <ProductSection
             title="ريف"
             description="حضورك أرقى مع كل رشة من ريف عطور تجمع بين الأصالة والحداثة لتقدم لك تجارب عطرية تفوق توقعاتك"
-            products={[
-              { id: "reef-1", name: "ريف 33", brand: "ريف", price: 480, image: perfume5 },
-              { id: "reef-2", name: "ريف 29", brand: "ريف", price: 460, image: perfume6 },
-              { id: "reef-3", name: "ريف 21", brand: "ريف", price: 440, image: perfume7 },
-              { id: "reef-4", name: "ريف 19", brand: "ريف", price: 420, image: perfume8 },
-            ]}
+            products={getProductsByBrand("ريف")}
             viewMoreLink="/products?brand=ريف"
           />
 
@@ -283,12 +333,7 @@ const Index = () => {
           <ProductSection
             title="ثنيان"
             description="ملكي الطبع، جريء الروح ترف شرقي يجمع الأصالة والتميز"
-            products={[
-              { id: "thunayan-1", name: "روشن", brand: "ثنيان", price: 520, image: perfume1 },
-              { id: "thunayan-2", name: "دكتاتور", brand: "ثنيان", price: 550, image: perfume2 },
-              { id: "thunayan-3", name: "ممنوع", brand: "ثنيان", price: 480, image: perfume3 },
-              { id: "thunayan-4", name: "ال اوف يو", brand: "ثنيان", price: 500, image: perfume4 },
-            ]}
+            products={getProductsByBrand("ثنيان")}
             viewMoreLink="/products?brand=ثنيان"
           />
 
@@ -296,12 +341,7 @@ const Index = () => {
           <ProductSection
             title="قصة"
             description="فصل جديد من قصة كل عطر يحكي فصلاً من أناقتك"
-            products={[
-              { id: "qissa-1", name: "لالونا", brand: "قصة", price: 580, image: perfume5 },
-              { id: "qissa-2", name: "ون اند اونلي", brand: "قصة", price: 620, image: perfume6 },
-              { id: "qissa-3", name: "هيدسون فالي", brand: "قصة", price: 590, image: perfume7 },
-              { id: "qissa-4", name: "امبيريال فالي", brand: "قصة", price: 610, image: perfume8 },
-            ]}
+            products={getProductsByBrand("قصة")}
             viewMoreLink="/products?brand=قصة"
           />
 
@@ -309,12 +349,7 @@ const Index = () => {
           <ProductSection
             title="العز للعود"
             description="فخامة العود كما يجب أن تُروى"
-            products={[
-              { id: "alezoud-1", name: "عود فاخر", brand: "العز للعود", price: 720, image: perfume1, isNew: true },
-              { id: "alezoud-2", name: "عود ملكي", brand: "العز للعود", price: 850, image: perfume2, isNew: true },
-              { id: "alezoud-3", name: "عود العز", brand: "العز للعود", price: 680, image: perfume3 },
-              { id: "alezoud-4", name: "عود مميز", brand: "العز للعود", price: 750, image: perfume4 },
-            ]}
+            products={getProductsByBrand("العز للعود")}
             viewMoreLink="/products?brand=العز للعود"
           />
 
@@ -322,12 +357,7 @@ const Index = () => {
           <ProductSection
             title="دخون"
             description="سر الجاذبية في مزيج من الفخامة والتراث"
-            products={[
-              { id: "dukhoon-1", name: "اميرالد عود", brand: "دخون", price: 380, image: perfume5 },
-              { id: "dukhoon-2", name: "برايم", brand: "دخون", price: 420, image: perfume6 },
-              { id: "dukhoon-3", name: "ماكس", brand: "دخون", price: 360, image: perfume7 },
-              { id: "dukhoon-4", name: "ذاتي", brand: "دخون", price: 400, image: perfume8 },
-            ]}
+            products={getProductsByBrand("دخون")}
             viewMoreLink="/products?brand=دخون"
           />
 
