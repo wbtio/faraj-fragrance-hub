@@ -42,7 +42,7 @@ interface ProductImage {
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { addToCart, cartItems } = useCart();
   const { toast } = useToast();
   
   const [product, setProduct] = useState<Product | null>(null);
@@ -134,6 +134,20 @@ const ProductDetails = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Calculate quantity in cart for this product
+  const getQuantityInCart = () => {
+    if (!id) return 0;
+    const cartItem = cartItems.find(item => item.product_id === id);
+    return cartItem ? cartItem.quantity : 0;
+  };
+
+  // Calculate available stock (total stock - quantity in cart)
+  const getAvailableStock = () => {
+    const stockQuantity = product?.stock_quantity || 0;
+    const quantityInCart = getQuantityInCart();
+    return stockQuantity - quantityInCart;
   };
 
   const handleAddToCart = async () => {
@@ -280,12 +294,12 @@ const ProductDetails = () => {
               
               {/* Badges */}
               <div className="absolute top-4 right-4 flex flex-col gap-2">
-                {product.stock_quantity && product.stock_quantity > 0 && product.is_new && (
+                {getAvailableStock() > 0 && product.is_new && (
                   <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-bold">
                     جديد
                   </span>
                 )}
-                {product.stock_quantity && product.stock_quantity > 0 && product.on_sale && discount > 0 && (
+                {getAvailableStock() > 0 && product.on_sale && discount > 0 && (
                   <span className="bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-sm font-bold">
                     خصم {discount}%
                   </span>
@@ -415,8 +429,15 @@ const ProductDetails = () => {
 
             {/* Stock Status */}
             <div className="mb-6">
-              {product.stock_quantity && product.stock_quantity > 0 ? (
-                <p className="text-green-600 font-semibold">متوفر</p>
+              {getAvailableStock() > 0 ? (
+                <div>
+                  <p className="text-green-600 font-semibold">متوفر</p>
+                  {getQuantityInCart() > 0 && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      في السلة: {getQuantityInCart()} | المتبقي: {getAvailableStock()}
+                    </p>
+                  )}
+                </div>
               ) : (
                 <p className="text-destructive font-semibold">نفذ</p>
               )}
@@ -424,7 +445,7 @@ const ProductDetails = () => {
 
             {/* Action Buttons */}
             <div className="space-y-3 mb-8">
-              {product.stock_quantity && product.stock_quantity > 0 ? (
+              {getAvailableStock() > 0 ? (
                 <div className="flex gap-3">
                   <Button
                     size="lg"
