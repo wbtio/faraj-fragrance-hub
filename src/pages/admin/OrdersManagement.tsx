@@ -42,6 +42,7 @@ interface Order {
   payment_status: string;
   notes?: string;
   created_at: string;
+  total_items?: number;
 }
 
 interface OrderItem {
@@ -179,7 +180,22 @@ const OrdersManagement = () => {
 
       if (error) throw error;
       
-      const newOrders = data || [];
+      let newOrders = data || [];
+      
+      // Fetch total items for each order
+      const ordersWithItems = await Promise.all(
+        newOrders.map(async (order) => {
+          const { data: items } = await supabase
+            .from("order_items")
+            .select("quantity")
+            .eq("order_id", order.id);
+          
+          const total_items = items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+          return { ...order, total_items };
+        })
+      );
+      
+      newOrders = ordersWithItems;
       
       console.log("📦 Fetching orders:", {
         previousCount: lastOrderCountRef.current,
@@ -398,6 +414,7 @@ const OrdersManagement = () => {
                 </div>
               </TableHead>
               <TableHead>المدينة</TableHead>
+              <TableHead>عدد الايتامات</TableHead>
               <TableHead>المبلغ الإجمالي</TableHead>
               <TableHead>الحالة</TableHead>
               <TableHead>التاريخ</TableHead>
@@ -424,6 +441,7 @@ const OrdersManagement = () => {
                   </div>
                 </TableCell>
                 <TableCell>{order.customer_city || "-"}</TableCell>
+                <TableCell className="font-semibold text-center bg-amber-50">{order.total_items || 0}</TableCell>
                 <TableCell className="font-semibold">{order.total_amount.toLocaleString()} د.ع</TableCell>
                 <TableCell>
                   <Select
