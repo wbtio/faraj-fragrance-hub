@@ -14,7 +14,8 @@ import {
   Users,
   LogOut,
   Settings,
-  Bell
+  Bell,
+  BarChart3
 } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -125,6 +126,13 @@ const AdminDashboard = () => {
       icon: Bell,
       path: "/admin/notifications",
       color: "bg-purple-500",
+    },
+    {
+      title: "التقارير والإحصائيات",
+      description: "عرض التقارير والمخططات البيانية",
+      icon: BarChart3,
+      path: "/admin/reports",
+      color: "bg-cyan-500",
     },
   ];
 

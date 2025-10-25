@@ -21,6 +21,7 @@ import OrdersManagement from "./pages/admin/OrdersManagement";
 import CustomersManagement from "./pages/admin/CustomersManagement";
 import SystemSettings from "./pages/admin/SystemSettings";
 import NotificationRequests from "./pages/admin/NotificationRequests";
+import Reports from "./pages/admin/Reports";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import ShippingPolicy from "./pages/ShippingPolicy";
@@ -97,6 +98,11 @@ const App = () => (
             <Route path="/admin/notifications" element={
               <ProtectedRoute>
                 <NotificationRequests />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/reports" element={
+              <ProtectedRoute>
+                <Reports />
               </ProtectedRoute>
             } />
             <Route path="/brand/:brandSlug" element={<BrandProducts />} />
