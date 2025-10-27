@@ -26,7 +26,7 @@ import {
   ScatterChart,
   Scatter,
 } from "recharts";
-import { Calendar } from "lucide-react";
+import { Calendar, TrendingUp, DollarSign, ShoppingCart, Users, AlertCircle } from "lucide-react";
 
 interface OrderData {
   date: string;
@@ -60,6 +60,12 @@ const Reports = () => {
   const [paymentStatus, setPaymentStatus] = useState<StatusData[]>([]);
   const [orderTrend, setOrderTrend] = useState<OrderData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [summaryStats, setSummaryStats] = useState({
+    totalOrders: 0,
+    totalRevenue: 0,
+    totalCustomers: 0,
+    completedOrders: 0,
+  });
 
   const COLORS = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"];
 
@@ -84,10 +90,22 @@ const Reports = () => {
       }
 
       // 2. Orders by Status
-      const { data: allOrders } = await supabase.from("orders").select("status");
+      const { data: allOrders } = await supabase.from("orders").select("status, total_amount, customer_name");
       if (allOrders) {
         const statusCounts = countByStatus(allOrders);
         setOrdersByStatus(statusCounts);
+        
+        // Calculate summary stats
+        const totalRevenue = allOrders.reduce((sum: number, order: any) => sum + (order.total_amount || 0), 0);
+        const completedCount = allOrders.filter((o: any) => o.status === "completed").length;
+        const uniqueCustomers = new Set(allOrders.map((o: any) => o.customer_name)).size;
+        
+        setSummaryStats({
+          totalOrders: allOrders.length,
+          totalRevenue,
+          totalCustomers: uniqueCustomers,
+          completedOrders: completedCount,
+        });
       }
 
       // 3. Top Products
@@ -263,51 +281,124 @@ const Reports = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
         <AdminHeader />
         <div className="container mx-auto px-4 py-8 text-center">
-          <p className="text-muted-foreground">جاري تحميل التقارير...</p>
+          <div className="flex items-center justify-center gap-2">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <p className="text-muted-foreground">جاري تحميل التقارير...</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <AdminHeader />
       <div className="container mx-auto px-4 py-8" dir="rtl">
+        {/* Header Section */}
         <div className="mb-8">
-          <div className="flex items-center gap-2 mb-2">
-            <Calendar className="h-8 w-8 text-blue-500" />
-            <h1 className="text-3xl font-bold">التقارير والإحصائيات</h1>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+              <Calendar className="h-8 w-8 text-white" />
+            </div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+              التقارير والإحصائيات
+            </h1>
           </div>
-          <p className="text-muted-foreground">
-            عرض شامل للبيانات والإحصائيات المتعلقة بالطلبات والمنتجات
+          <p className="text-muted-foreground text-lg">
+            عرض شامل للبيانات والإحصائيات المتعلقة بالطلبات والمنتجات والعملاء
           </p>
+        </div>
+
+        {/* Summary Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {/* Total Orders */}
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-br from-blue-50 to-blue-100">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground font-medium">إجمالي الطلبات</p>
+                  <p className="text-3xl font-bold text-blue-600 mt-2">{summaryStats.totalOrders}</p>
+                </div>
+                <div className="p-3 bg-blue-500 rounded-lg">
+                  <ShoppingCart className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Total Revenue */}
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-br from-green-50 to-green-100">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground font-medium">إجمالي الإيرادات</p>
+                  <p className="text-3xl font-bold text-green-600 mt-2">{summaryStats.totalRevenue.toLocaleString()} د.ع</p>
+                </div>
+                <div className="p-3 bg-green-500 rounded-lg">
+                  <DollarSign className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Total Customers */}
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-br from-purple-50 to-purple-100">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground font-medium">إجمالي العملاء</p>
+                  <p className="text-3xl font-bold text-purple-600 mt-2">{summaryStats.totalCustomers}</p>
+                </div>
+                <div className="p-3 bg-purple-500 rounded-lg">
+                  <Users className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Completed Orders */}
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-br from-orange-50 to-orange-100">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground font-medium">الطلبات المكتملة</p>
+                  <p className="text-3xl font-bold text-orange-600 mt-2">{summaryStats.completedOrders}</p>
+                </div>
+                <div className="p-3 bg-orange-500 rounded-lg">
+                  <TrendingUp className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Reports Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* 1. Orders by Date - Line Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>الطلبات حسب التاريخ</CardTitle>
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">الطلبات حسب التاريخ</CardTitle>
               <CardDescription>عدد الطلبات في آخر 30 يوم</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={ordersByDate}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="date" angle={-45} textAnchor="end" height={80} />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip contentStyle={{ backgroundColor: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: "8px" }} />
                   <Legend />
                   <Line
                     type="monotone"
                     dataKey="count"
                     stroke="#3b82f6"
+                    strokeWidth={2}
                     name="عدد الطلبات"
-                    dot={{ r: 4 }}
+                    dot={{ r: 4, fill: "#3b82f6" }}
+                    activeDot={{ r: 6 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -315,9 +406,9 @@ const Reports = () => {
           </Card>
 
           {/* 2. Orders by Status - Pie Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>الطلبات حسب الحالة</CardTitle>
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">الطلبات حسب الحالة</CardTitle>
               <CardDescription>توزيع حالات الطلبات</CardDescription>
             </CardHeader>
             <CardContent>
@@ -337,36 +428,36 @@ const Reports = () => {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip contentStyle={{ backgroundColor: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: "8px" }} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
           {/* 3. Top Products - Bar Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>أفضل المنتجات مبيعاً</CardTitle>
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">أفضل المنتجات مبيعاً</CardTitle>
               <CardDescription>المنتجات الأكثر طلباً</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={topProducts}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip contentStyle={{ backgroundColor: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: "8px" }} />
                   <Legend />
-                  <Bar dataKey="sales" fill="#10b981" name="عدد المبيعات" />
+                  <Bar dataKey="sales" fill="#10b981" name="عدد المبيعات" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
           {/* 4. Products by Category - Pie Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>المنتجات حسب الفئة</CardTitle>
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">المنتجات حسب الفئة</CardTitle>
               <CardDescription>توزيع المنتجات على الفئات</CardDescription>
             </CardHeader>
             <CardContent>
@@ -386,25 +477,25 @@ const Reports = () => {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip contentStyle={{ backgroundColor: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: "8px" }} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
           {/* 5. Revenue by Month - Area Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>الإيرادات حسب الشهر</CardTitle>
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">الإيرادات حسب الشهر</CardTitle>
               <CardDescription>إجمالي الإيرادات الشهرية</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <AreaChart data={revenueByMonth}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="date" angle={-45} textAnchor="end" height={80} />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip contentStyle={{ backgroundColor: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: "8px" }} />
                   <Legend />
                   <Area
                     type="monotone"
@@ -419,9 +510,9 @@ const Reports = () => {
           </Card>
 
           {/* 6. Payment Status - Pie Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>حالة الدفع</CardTitle>
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">حالة الدفع</CardTitle>
               <CardDescription>توزيع حالات الدفع</CardDescription>
             </CardHeader>
             <CardContent>
@@ -441,25 +532,25 @@ const Reports = () => {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip contentStyle={{ backgroundColor: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: "8px" }} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
           {/* 7. Order Trend - Line Chart with Area */}
-          <Card>
-            <CardHeader>
-              <CardTitle>اتجاه الطلبات</CardTitle>
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">اتجاه الطلبات</CardTitle>
               <CardDescription>تطور عدد الطلبات بمرور الوقت</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <AreaChart data={orderTrend}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="date" angle={-45} textAnchor="end" height={80} />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip contentStyle={{ backgroundColor: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: "8px" }} />
                   <Legend />
                   <Area
                     type="monotone"
@@ -474,29 +565,29 @@ const Reports = () => {
           </Card>
 
           {/* 8. Top Products Revenue - Bar Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>أفضل المنتجات بالإيرادات</CardTitle>
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">أفضل المنتجات بالإيرادات</CardTitle>
               <CardDescription>المنتجات الأكثر إيراداً</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={topProducts}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip contentStyle={{ backgroundColor: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: "8px" }} />
                   <Legend />
-                  <Bar dataKey="revenue" fill="#ec4899" name="الإيرادات (د.ع)" />
+                  <Bar dataKey="revenue" fill="#ec4899" name="الإيرادات (د.ع)" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
           {/* 9. Category Distribution - Radar Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>توزيع الفئات</CardTitle>
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">توزيع الفئات</CardTitle>
               <CardDescription>مقارنة عدد المنتجات في كل فئة</CardDescription>
             </CardHeader>
             <CardContent>
@@ -512,7 +603,7 @@ const Reports = () => {
                     fill="#14b8a6"
                     fillOpacity={0.6}
                   />
-                  <Tooltip />
+                  <Tooltip contentStyle={{ backgroundColor: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: "8px" }} />
                   <Legend />
                 </RadarChart>
               </ResponsiveContainer>

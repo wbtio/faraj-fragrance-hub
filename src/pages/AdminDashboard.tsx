@@ -15,7 +15,9 @@ import {
   LogOut,
   Settings,
   Bell,
-  BarChart3
+  BarChart3,
+  CheckCircle,
+  X
 } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -27,12 +29,16 @@ const AdminDashboard = () => {
     totalCategories: 0,
     totalOrders: 0,
   });
+  const [showNotification, setShowNotification] = useState(true);
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
     } else {
       fetchStats();
+      // Show notification for 5 seconds then auto-hide
+      const timer = setTimeout(() => setShowNotification(false), 5000);
+      return () => clearTimeout(timer);
     }
   }, [isAuthenticated, navigate]);
 
@@ -140,6 +146,38 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-background">
       <AdminHeader />
       <div className="container mx-auto px-4 py-8" dir="rtl">
+        {/* Welcome Notification */}
+        {showNotification && (
+          <div className="mb-6 animate-in fade-in slide-in-from-top-2 duration-300">
+            <Card className="border-0 bg-gradient-to-r from-green-50 to-emerald-50 shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className="p-2 bg-green-500 rounded-lg mt-1">
+                      <CheckCircle className="h-6 w-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-green-900 mb-1">تم إنجاز صفحة التقارير ✓</h3>
+                      <p className="text-green-800 mb-2">
+                        تم تصميم وإطلاق صفحة التقارير والإحصائيات الشاملة بقيمة <span className="font-bold">80,000 د.ع</span>
+                      </p>
+                      <p className="text-sm text-green-700">
+                        جميع التعديلات والتحسينات المتبقية مشمولة ضمن هذا المبلغ. الصفحة متصلة بقاعدة البيانات بالكامل وتعرض 9 مخططات بيانية متقدمة.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowNotification(false)}
+                    className="text-green-600 hover:text-green-800 transition-colors mt-1"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold">لوحة التحكم</h1>
           <p className="text-muted-foreground mt-1">
