@@ -405,6 +405,7 @@ const OrdersManagement = () => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12 text-center">#</TableHead>
               <TableHead>رقم الطلب</TableHead>
               <TableHead>اسم العميل</TableHead>
               <TableHead className="bg-blue-50">
@@ -422,8 +423,9 @@ const OrdersManagement = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredOrders.map((order) => (
+            {filteredOrders.map((order, index) => (
               <TableRow key={order.id}>
+                <TableCell className="font-medium text-center font-bold text-blue-600">{index + 1}</TableCell>
                 <TableCell className="font-medium">{order.order_number}</TableCell>
                 <TableCell>{order.customer_name}</TableCell>
                 <TableCell className="bg-blue-50/50">
