@@ -46,6 +46,12 @@ interface Product {
   categories?: {
     name_ar: string;
   };
+  product_categories?: Array<{
+    categories?: {
+      id: string;
+      name_ar: string;
+    };
+  }>;
 }
 
 interface Brand {
