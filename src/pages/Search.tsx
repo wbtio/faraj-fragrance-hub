@@ -20,6 +20,7 @@ interface Product {
   is_new?: boolean;
   on_sale?: boolean;
   stock_quantity?: number;
+  volume?: string;
   brands?: { name_ar: string };
   categories?: { name_ar: string };
 }
@@ -325,6 +326,7 @@ const Search = () => {
                 isNew={product.is_new}
                 onSale={product.on_sale}
                 stockQuantity={product.stock_quantity}
+                volume={product.volume}
               />
             ))}
           </div>

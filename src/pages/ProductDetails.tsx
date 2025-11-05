@@ -25,6 +25,7 @@ interface Product {
   is_new?: boolean;
   on_sale?: boolean;
   stock_quantity?: number;
+  volume?: string;
   top_notes?: string;
   middle_notes?: string;
   base_notes?: string;
@@ -367,6 +368,15 @@ const ProductDetails = () => {
               </div>
             )}
 
+            {/* Volume */}
+            {product.volume && (
+              <div className="mb-4">
+                <p className="text-muted-foreground">
+                  الحجم: <span className="font-medium text-foreground text-lg">{product.volume}</span>
+                </p>
+              </div>
+            )}
+
             {/* Gender */}
             {product.gender && (
               <div className="mb-4">
@@ -530,6 +540,7 @@ const ProductDetails = () => {
                   isNew={relatedProduct.is_new}
                   onSale={relatedProduct.on_sale}
                   stockQuantity={relatedProduct.stock_quantity}
+                  volume={relatedProduct.volume}
                 />
               ))}
             </div>

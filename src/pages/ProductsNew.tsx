@@ -37,6 +37,7 @@ interface Product {
   category_id: string;
   is_active: boolean;
   stock_quantity?: number;
+  volume?: string;
   is_new?: boolean;
   is_on_sale?: boolean;
   brands?: {
@@ -368,6 +369,7 @@ const ProductsNew = () => {
                     isNew={product.is_new}
                     onSale={product.is_on_sale}
                     originalPrice={product.original_price}
+                    volume={product.volume}
                   />
                 ))}
               </div>

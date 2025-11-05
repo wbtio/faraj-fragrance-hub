@@ -13,6 +13,7 @@ interface Product {
   isNew?: boolean;
   onSale?: boolean;
   stockQuantity?: number;
+  volume?: string;
 }
 
 interface ProductSectionProps {

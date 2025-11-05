@@ -17,6 +17,7 @@ interface ProductCardProps {
   isNew?: boolean;
   onSale?: boolean;
   stockQuantity?: number;
+  volume?: string;
 }
 
 export const ProductCard = ({
@@ -29,6 +30,7 @@ export const ProductCard = ({
   isNew,
   onSale,
   stockQuantity = 0,
+  volume,
 }: ProductCardProps) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -198,7 +200,12 @@ export const ProductCard = ({
         <p className="text-xs text-muted-foreground font-medium mb-1">{brand}</p>
 
         {/* Product Name */}
-        <h3 className="text-sm font-semibold mb-1 line-clamp-2 min-h-[2.5rem]">{name}</h3>
+        <h3 className="text-base font-bold mb-1 line-clamp-2 min-h-[2.8rem]">{name}</h3>
+
+        {/* Volume */}
+        {volume && (
+          <p className="text-xs text-muted-foreground mb-2">{volume}</p>
+        )}
 
         {/* Price */}
         <div className="mb-3">
