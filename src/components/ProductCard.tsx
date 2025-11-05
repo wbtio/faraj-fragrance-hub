@@ -200,7 +200,7 @@ export const ProductCard = ({
         <p className="text-xs text-muted-foreground font-medium mb-1">{brand}</p>
 
         {/* Product Name */}
-        <h3 className="text-base font-bold mb-1 line-clamp-2 min-h-[2.8rem]">{name}</h3>
+        <h3 className="text-lg font-bold mb-1 line-clamp-2 min-h-[3.2rem] leading-tight">{name}</h3>
 
         {/* Volume */}
         {volume && (
